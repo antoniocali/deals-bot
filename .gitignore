@@ -1,3 +1,4 @@
 /env
 .vscode
 *png
+__pycache__
