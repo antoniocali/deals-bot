@@ -25,11 +25,11 @@ lines = importantData.split("\n")
 extracted = json.loads(importantData)
 items = extracted["dealDetails"].keys()
 
-print(items)
+print(extracted)
 for item in items:
     currentItem = extracted["dealDetails"][item]
     generators.image_util.create_image(
-        currentItem["maxCurrentPrice"],
+        currentItem["minCurrentPrice"],
         currentItem["primaryImage"],
         currentItem["impressionAsin"],
     )
