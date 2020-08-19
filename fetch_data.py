@@ -1,7 +1,10 @@
-import generators.image_util
+# import generators.image_util
 import requests
 import re
 import json
+import pprint
+from models import DealsModel
+from typing import List
 
 headers = {
     "authority": "www.amazon.com",
@@ -16,21 +19,29 @@ headers = {
     "sec-fetch-dest": "document",
     "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
 }
-r = requests.get("https://www.amazon.it/gp/goldbox", headers=headers)
 
-reg = r"\"dealDetails\"\s*:\s*{(.*)}\n\s*},\n"
-m = re.search(reg, r.text, flags=re.DOTALL)
-importantData = "{" + m.group(0)[:-2] + "}"
-lines = importantData.split("\n")
-extracted = json.loads(importantData)
-items = extracted["dealDetails"].keys()
 
-print(extracted)
-for item in items:
-    currentItem = extracted["dealDetails"][item]
-    generators.image_util.create_image(
-        currentItem["minCurrentPrice"],
-        currentItem["primaryImage"],
-        currentItem["impressionAsin"],
+def fetch_data() -> List[DealsModel]:
+    r = requests.get("https://www.amazon.it/gp/goldbox", headers=headers)
+
+    reg = r"\"dealDetails\"\s*:\s*{(.*)}\n\s*},\n"
+    m = re.search(reg, r.text, flags=re.DOTALL)
+    importantData = "{" + m.group(0)[:-2] + "}"
+    # lines = importantData.split("\n")
+    extracted = json.loads(importantData)
+    # items = extracted["dealDetails"].keys()
+    pprint.pprint(extracted)
+    return list(
+        map(
+            lambda item: DealsModel(
+                description=item["description"],
+                impressionAsin=item["impressionAsin"],
+                imageUrl=item["primaryImage"],
+                originalPrice=item["maxBAmount"],
+                dealPrice=item["maxDealPrice"],
+                percentOff=item["maxPercentOff"],
+                reviewRating=item["reviewRating"],
+            ),
+            extracted["dealDetails"].values(),
+        )
     )
-
