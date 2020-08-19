@@ -21,16 +21,17 @@ headers = {
 }
 
 
-def fetch_data() -> List[DealsModel]:
-    r = requests.get("https://www.amazon.it/gp/goldbox", headers=headers)
+def fetch_data(params: str) -> List[DealsModel]:
+    r = requests.get(
+        f"https://www.amazon.it/gp/goldbox?gb_f_deals1={params}", headers=headers
+    )
 
     reg = r"\"dealDetails\"\s*:\s*{(.*)}\n\s*},\n"
     m = re.search(reg, r.text, flags=re.DOTALL)
+    if not m:
+        return []
     importantData = "{" + m.group(0)[:-2] + "}"
-    # lines = importantData.split("\n")
     extracted = json.loads(importantData)
-    # items = extracted["dealDetails"].keys()
-    pprint.pprint(extracted)
     return list(
         map(
             lambda item: DealsModel(

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from enum import IntEnum
 
 
 class DealsModel(BaseModel):
@@ -9,3 +10,10 @@ class DealsModel(BaseModel):
     dealPrice: str
     percentOff: int
     reviewRating: float
+
+
+class DiscountRange(IntEnum):
+    MIN = 0
+    MEDIUM = 1
+    HIGH = 2
+    MAX = 3
