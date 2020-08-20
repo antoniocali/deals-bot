@@ -2,7 +2,6 @@
 import requests
 import re
 import json
-import pprint
 from models import DealsModel
 from typing import List
 
@@ -21,11 +20,10 @@ headers = {
 }
 
 
-def fetch_data(params: str) -> List[DealsModel]:
+def fetch_data(params: str = None) -> List[DealsModel]:
     r = requests.get(
         f"https://www.amazon.it/gp/goldbox?gb_f_deals1={params}", headers=headers
     )
-
     reg = r"\"dealDetails\"\s*:\s*{(.*)}\n\s*},\n"
     m = re.search(reg, r.text, flags=re.DOTALL)
     if not m:
