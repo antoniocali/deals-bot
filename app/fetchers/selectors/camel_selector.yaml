@@ -1,0 +1,26 @@
+imageUrl:
+    css: 'a div img.delayed-img'
+    xpath: //a//div//img
+    multiple: true
+    type: Attribute
+    attribute: 'delayed-src'
+discountPrice:
+    css: 'div.column:nth-of-type(n+2) div.current_price'
+    xpath: '//div[contains(concat(" ",normalize-space(@class)," ")," current_price ")]'
+    multiple: true
+    type: Text
+discountAmount:
+    css: span.green
+    xpath: '//span[contains(concat(" ",normalize-space(@class)," ")," green ")]'
+    multiple: true
+    type: Text
+description:
+    css: 'div.column a.truncy_title'
+    xpath: '//div[contains(concat(" ",normalize-space(@class)," ")," carousel_parent ")]//div[contains(concat(" ",normalize-space(@class)," ")," column ")]//a[contains(concat(" ",normalize-space(@class)," ")," truncy_title ")]'
+    multiple: true
+    type: Text
+link:
+    css: 'div.column a.truncy_title'
+    xpath: '//div[contains(concat(" ",normalize-space(@class)," ")," carousel_parent ")]//div[contains(concat(" ",normalize-space(@class)," ")," column ")]//a[contains(concat(" ",normalize-space(@class)," ")," truncy_title ")]'
+    multiple: true
+    type: Link

@@ -9,7 +9,7 @@ class DealsModel(BaseModel):
     originalPrice: str
     dealPrice: str
     percentOff: int
-    reviewRating: float
+    reviewRating: float = -1
 
 
 class DiscountRange(IntEnum):
@@ -17,3 +17,8 @@ class DiscountRange(IntEnum):
     MEDIUM = 1
     HIGH = 2
     MAX = 3
+
+
+class Website(IntEnum):
+    CAMEL = 0
+    AMAZON = 1

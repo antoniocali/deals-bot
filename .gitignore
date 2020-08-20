@@ -4,3 +4,4 @@
 __pycache__
 dump.rdb
 log.txt
+*egg-info
