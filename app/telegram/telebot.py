@@ -1,31 +1,23 @@
 from telethon import TelegramClient
 import requests
-import yaml
 import time
+from app.utils import amazonAffiliateLink, shortenUrlAds, shortenUrlFree
+from app.utils.config import Config
 
 url = "http://localhost:8000/"
 
-
-# Use a config file for moment
-with open("./app/telegram/config.yaml", "r") as stream:
-    config = yaml.safe_load(stream)
-    api_id = config["api_id"]
-    api_hash = config["api_hash"]
-    bot_token = config["bot_token"]
-
-
-bot = TelegramClient("bot", api_id, api_hash)
+config = Config.get_instance()
+bot = TelegramClient("bot", config.api_id, config.api_hash)
 # Starting as a bot account
 
 
 # But then we can use the client instance as usual
 async def main():
-    req = requests.get(url + "camel")
+    req = requests.get(url + "camel?maxProduct=1")
     if req.ok:
         response = req.json()
         for elem in response:
             channel = await bot.get_input_entity("t.me/provalolasd")
-            print(channel)
             asin = elem["impressionAsin"]
             originalPrice = elem["originalPrice"]
             dealPrice = elem["dealPrice"]
@@ -33,19 +25,29 @@ async def main():
             msg = await bot.send_message(
                 channel, message=message(originalPrice, dealPrice, discount, asin),
             )
-            time.sleep(5)
             print(msg)
+            time.sleep(5)
 
 
 def message(originalPrice: float, dealPrice: float, discount: int, asin: str) -> str:
+    affialeLink = amazonAffiliateLink(asin)
+    shortUrlAds = config.short_url_ads
+    shortUrl = (
+        shortenUrlAds(amazonAffiliateLink(asin))
+        if shortUrlAds
+        else shortenUrlFree(amazonAffiliateLink(asin))
+    )
+    shortUrl = shortUrl if shortUrl else affialeLink
     return f"""**Incredibile Offerta**
     **Asin**: {asin}
     **Prezzo Originale**: {originalPrice}€
     **Prezzo Scontato**: {dealPrice}€
-    **Sconto**: {discount}% 
+    **Sconto**: {discount}%
+
+    __URL__: {shortUrl}
     """
 
 
-with bot.start(bot_token=bot_token):
+with bot.start(bot_token=config.bot_token):
     bot.loop.run_until_complete(main())
 
