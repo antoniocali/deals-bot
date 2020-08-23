@@ -4,6 +4,8 @@ import re
 import json
 from typing import List, Optional
 from app.models import DealsModel, Website
+from slugify import slugify
+from app.utils import removeSpecialFromPrice
 
 headers = {
     "authority": "www.amazon.com",
@@ -43,8 +45,8 @@ def _fetch_camel(params: dict = None) -> List[DealsModel]:
             continue
         if elem[0].lower() == "out of stock":
             continue
-        discountPrice = float(elem[0].replace(",", ".").replace("€", ""))
-        discountAmount = float(elem[1].replace(",", ".").replace("€", ""))
+        discountPrice = float(removeSpecialFromPrice(elem[0]))
+        discountAmount = float(removeSpecialFromPrice(elem[1]))
         discount = 100 - int((discountPrice / (discountPrice + discountAmount)) * 100)
         dataAsinAndOriginalPrice.append(
             (
@@ -65,6 +67,7 @@ def _fetch_camel(params: dict = None) -> List[DealsModel]:
                 description=item[3],
                 imageUrl=item[4],
                 impressionAsin=item[5],
+                slug=slugify(item[3]),
             ),
             dataAsinAndOriginalPrice,
         )
@@ -82,6 +85,17 @@ def _fetch_amazon(params: dict = None) -> List[DealsModel]:
         return []
     importantData = "{" + matcher.group(0)[:-2] + "}"
     extracted = json.loads(importantData)
+    mandatoryKeys = set(
+        [
+            "description",
+            "impressionAsin",
+            "primaryImage",
+            "maxBAmount",
+            "maxDealPrice",
+            "maxPercentOff",
+            "reviewRating",
+        ]
+    )
     return list(
         map(
             lambda item: DealsModel(
@@ -92,8 +106,12 @@ def _fetch_amazon(params: dict = None) -> List[DealsModel]:
                 dealPrice=item["maxDealPrice"],
                 percentOff=item["maxPercentOff"],
                 reviewRating=item["reviewRating"],
+                slug=slugify(item["description"]),
             ),
-            extracted["dealDetails"].values(),
+            filter(
+                lambda item: set(item.keys()).issuperset(mandatoryKeys),
+                extracted["dealDetails"].values(),
+            ),
         )
     )
 

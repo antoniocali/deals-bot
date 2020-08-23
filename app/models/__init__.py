@@ -9,6 +9,7 @@ class DealsModel(BaseModel):
     originalPrice: str
     dealPrice: str
     percentOff: int
+    slug: str
     reviewRating: float = -1
 
 
