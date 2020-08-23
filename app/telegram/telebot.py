@@ -39,7 +39,6 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
     )
     shortUrl = shortUrl if shortUrl else affialeLink
     return f"""**Incredibile Offerta**
-    **Asin**: {asin}
     **Prezzo Originale**: {originalPrice}€
     **Prezzo Scontato**: {dealPrice}€
     **Sconto**: {discount}%
