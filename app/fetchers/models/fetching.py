@@ -95,6 +95,10 @@ class FetcherCamel(Fetcher):
             discount = 100 - int(
                 (discountPrice / (discountPrice + discountAmount)) * 100
             )
+            description = elem[2]
+            shortDescription = (
+                description if len(description) < 30 else description[:30]
+            )
             dataAsinAndOriginalPrice.append(
                 (
                     discountPrice,
@@ -103,6 +107,7 @@ class FetcherCamel(Fetcher):
                     elem[2],
                     elem[3],
                     matcher.group(1),
+                    shortDescription
                 )
             )
         return list(
@@ -114,7 +119,7 @@ class FetcherCamel(Fetcher):
                     description=item[3],
                     imageUrl=item[4],
                     impressionAsin=item[5],
-                    slug=slugify(item[3]),
+                    slug=slugify(item[6]),
                 ),
                 dataAsinAndOriginalPrice,
             )
