@@ -8,5 +8,13 @@ setup(
     description="Bot to scrape website for deals",
     author_email="antoniodavidecali@gmail.com",
     python_requires=">=3.7",
+    install_requires=[
+        'uvicorn==0.11.8',
+        'python-slugify==4.0.1',
+        'Pillow==7.2.0',
+        'fastapi==0.61.0',
+        'telethon==1.16.2',
+        'aggdraw'
+    ]
 )
 

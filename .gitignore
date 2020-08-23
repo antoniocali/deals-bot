@@ -6,3 +6,4 @@ dump.rdb
 log.txt
 *egg-info
 *.session
+config.yaml
