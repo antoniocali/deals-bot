@@ -14,7 +14,8 @@ setup(
         'Pillow==7.2.0',
         'fastapi==0.61.0',
         'telethon==1.16.2',
-        'aggdraw'
+        'aggdraw',
+        'schedule==0.6.0'
     ]
 )
 

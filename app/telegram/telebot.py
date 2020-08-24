@@ -1,19 +1,24 @@
 from telethon import TelegramClient
 import requests
 import time
+import schedule
+import functools
 from app.utils import amazonAffiliateLink, shortenUrlAds, shortenUrlFree
 from app.utils.config import Config
 
 url = "http://localhost:8000/"
 
 config = Config.get_instance()
-bot = TelegramClient("bot", config.api_id, config.api_hash)
+bot = TelegramClient("bot", config.api_id, config.api_hash).start(
+    bot_token=config.bot_token
+)
 # Starting as a bot account
 
 
 # But then we can use the client instance as usual
 async def main():
-    req = requests.get(url + "camel?maxProduct=1")
+    req = requests.get(url + "camel?maxProduct=2")
+    schedule
     if req.ok:
         response = req.json()
         for elem in response:
@@ -47,6 +52,12 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
     """
 
 
-with bot.start(bot_token=config.bot_token):
+def start():
     bot.loop.run_until_complete(main())
 
+
+schedule.every(15).seconds.do(start)
+
+while 1:
+    schedule.run_pending()
+    time.sleep(30)
