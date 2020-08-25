@@ -5,9 +5,12 @@ from peewee import (
     DateTimeField,
     FloatField,
     IntegerField,
+    DoesNotExist,
 )
 from datetime import datetime
 from os import path, makedirs
+from app.models import DealsModel
+from typing import Optional, List
 
 db_path = "./database/deals.db"
 
@@ -41,7 +44,33 @@ def create_tables():
     db.close()
 
 
-def info():
-    db.connect()
-    print(db.get_tables())
-    db.close()
+def getDeal(asin: str) -> Optional[AmazonDeal]:
+    with db.connect():
+        try:
+            return AmazonDeal.get(AmazonDeal.asin == asin)
+        except DoesNotExist:
+            return None
+
+
+def createDeal(deal: DealsModel) -> AmazonDeal:
+    pass
+
+
+def upsertDeal(deal: DealsModel, connected: bool = False):
+    if not connected:
+        db.connect()
+    retDeal = getDeal(deal.impressionAsin)
+    if not retDeal:
+        createDeal(deal)
+    elif deal.dealPrice < retDeal.deal_price:
+        retDeal.deal_price = deal.dealPrice
+        retDeal.update_on = datetime.now()
+        retDeal.save()
+    if not connected:
+        db.close()
+
+
+def upsertDeals(deals: List[DealsModel]):
+    for deal in deals:
+        upsertDeal(deal)
+
