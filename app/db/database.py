@@ -37,40 +37,56 @@ class AmazonDeal(BaseModel):
     created_on = DateTimeField(null=False, default=datetime.now())
 
 
-def create_tables():
-    db.connect()
-    if not db.table_exists(AmazonDeal):
-        db.create_tables([AmazonDeal])
-    db.close()
+class Database:
+    def __init__(self) -> None:
+        self.db: SqliteDatabase = db
 
+    def connect(self):
+        if self.db.is_closed:
+            self.db.connect()
 
-def getDeal(asin: str) -> Optional[AmazonDeal]:
-    with db.connect():
+    def close(self):
+        if not self.db.is_closed:
+            self.db.close()
+
+    def create_tables(self):
+        self.db.connect()
+        if not db.table_exists(AmazonDeal):
+            self.db.create_tables([AmazonDeal])
+        self.db.close()
+
+    def getDeal(self, asin: str) -> Optional[AmazonDeal]:
         try:
-            return AmazonDeal.get(AmazonDeal.asin == asin)
+            deal = AmazonDeal.get(AmazonDeal.asin == asin)
         except DoesNotExist:
-            return None
+            deal = None
+        return deal
 
+    def _createDeal(self, deal: DealsModel) -> AmazonDeal:
+        deal = AmazonDeal.create(
+            asin=deal.impressionAsin,
+            original_price=deal.originalPrice,
+            deal_price=deal.dealPrice,
+            percent_off=deal.percentOff,
+            description=deal.description,
+            review_rating=deal.reviewRating,
+            image_url=deal.imageUrl,
+        )
+        return deal
 
-def createDeal(deal: DealsModel) -> AmazonDeal:
-    pass
+    def upsertDeal(self, deal: DealsModel):
+        retDeal = self.getDeal(deal.impressionAsin)
+        if not retDeal:
+            self._createDeal(deal)
+        elif float(deal.dealPrice) < float(retDeal.deal_price):
+            retDeal.deal_price = deal.dealPrice
+            retDeal.update_on = datetime.now()
+            retDeal.save()
 
+    def upsertDeals(self, deals: List[DealsModel]):
+        for deal in deals:
+            self.upsertDeal(deal)
 
-def upsertDeal(deal: DealsModel, connected: bool = False):
-    if not connected:
-        db.connect()
-    retDeal = getDeal(deal.impressionAsin)
-    if not retDeal:
-        createDeal(deal)
-    elif deal.dealPrice < retDeal.deal_price:
-        retDeal.deal_price = deal.dealPrice
-        retDeal.update_on = datetime.now()
-        retDeal.save()
-    if not connected:
-        db.close()
-
-
-def upsertDeals(deals: List[DealsModel]):
-    for deal in deals:
-        upsertDeal(deal)
-
+    def deals(self):
+        deals = AmazonDeal.select()
+        return deals
