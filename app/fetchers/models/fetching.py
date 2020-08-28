@@ -101,8 +101,8 @@ class FetcherCamel(Fetcher):
             )
             dataAsinAndOriginalPrice.append(
                 (
-                    discountPrice,
-                    "%.2f" % (discountPrice + discountAmount),
+                    round(discountPrice, 2),
+                    round(discountPrice + discountAmount, 2),
                     discount,
                     elem[2],
                     elem[3],

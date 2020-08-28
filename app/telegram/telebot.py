@@ -1,11 +1,9 @@
-from app.db.database import AmazonDeal, Database
+from app.db.database import Database
 from telethon import TelegramClient
 import requests
-import time
 import schedule
 from app.utils import amazonAffiliateLink, shortenUrlAds, shortenUrlFree
 from app.utils.config import Config
-from app.db import database
 from app.models import DealsModel
 
 url = "http://localhost:8000/"
@@ -30,20 +28,21 @@ async def main():
                 print(dbDeal, "already present in database")
                 continue
             db.upsertDeal(deal)
-            # channel = await bot.get_input_entity("t.me/provalolasd")
-            # msg = await bot.send_message(
-            #     channel,
-            #     message=message(
-            #         deal.originalPrice,
-            #         deal.dealPrice,
-            #         deal.percentOff,
-            #         deal.impressionAsin,
-            #     ),
-            # )
+            channel = await bot.get_input_entity("t.me/provalolasd")
+            msg = await bot.send_message(
+                channel,
+                message=message(
+                    deal.originalPrice,
+                    deal.dealPrice,
+                    deal.percentOff,
+                    deal.impressionAsin,
+                ),
+            )
+            print(msg)
             time.sleep(5)
 
 
-def message(originalPrice: str, dealPrice: str, discount: int, asin: str) -> str:
+def message(originalPrice: float, dealPrice: float, discount: int, asin: str) -> str:
     affialeLink = amazonAffiliateLink(asin)
     shortUrlAds = config.short_url_ads
     shortUrl = (
@@ -53,8 +52,8 @@ def message(originalPrice: str, dealPrice: str, discount: int, asin: str) -> str
     )
     shortUrl = shortUrl if shortUrl else affialeLink
     return f"""**Incredibile Offerta**
-    **Prezzo Originale**: {originalPrice}€
-    **Prezzo Scontato**: {dealPrice}€
+    **Prezzo Originale**: {"%.2f" % originalPrice}€
+    **Prezzo Scontato**: {"%.2f" % originalPrice}€
     **Sconto**: {discount}%
 
     __URL__: {shortUrl}

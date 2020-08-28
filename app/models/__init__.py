@@ -1,13 +1,15 @@
+from datetime import datetime
 from pydantic import BaseModel
 from enum import IntEnum
+from dataclasses import dataclass
 
 
 class DealsModel(BaseModel):
     description: str
     impressionAsin: str
     imageUrl: str
-    originalPrice: str
-    dealPrice: str
+    originalPrice: float
+    dealPrice: float
     percentOff: int
     slug: str
     reviewRating: float = -1
@@ -23,3 +25,10 @@ class DiscountRange(IntEnum):
 class Website(IntEnum):
     CAMEL = 0
     AMAZON = 1
+
+
+@dataclass
+class TelegramMessageModel:
+    id: int
+    channel_id: int
+    datetime: datetime
