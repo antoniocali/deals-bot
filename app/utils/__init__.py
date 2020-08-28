@@ -2,6 +2,8 @@ import requests
 from app.utils.config import Config
 from typing import Optional
 
+config = Config.get_instance()
+
 
 def removeSpecialFromPrice(textInput: str) -> str:
     return textInput.replace(".", "").replace(",", ".").replace("€", "")
@@ -9,7 +11,7 @@ def removeSpecialFromPrice(textInput: str) -> str:
 
 def shortenUrlAds(url: str) -> Optional[str]:
     provider = "https://api.shorte.st/v1/data/url"
-    token = Config.get_instance().shortest_token
+    token = config.shortest_token
     headers = {"public-api-token": token}
     data = {"urlToShorten": url}
     response = requests.put(provider, data=data, headers=headers)
@@ -35,7 +37,17 @@ def shortenUrlFree(url: str) -> Optional[str]:
 
 
 def amazonAffiliateLink(asin: str) -> str:
-    affiliateToken = Config.get_instance().amazon_affiliate
+    affiliateToken = config.amazon_affiliate
     return f"https://www.amazon.it/gp/product/{asin}/ref=as_li_tl?creativeASIN={asin}&tag={affiliateToken}"
+
+
+def delayBetweenTelegramMessages() -> int:
+    if config.telegram_delay_message_minutes:
+        return config.telegram_delay_message_minutes
+    else:
+        posts = config.telegram_posts_per_day
+        start = config.telegram_start_hour
+        stop = config.telegram_end_hour
+        return int((stop - start) * 60 / posts)
 
 

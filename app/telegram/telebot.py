@@ -1,15 +1,25 @@
 from datetime import datetime, timedelta, date
+from logging import log
 from app.db.database import Database
 from telethon import TelegramClient
 from telethon.tl.types import InputPeerChannel
 from telethon.errors import BotInvalidError
 import requests
-import schedule
 import time
-from app.utils import amazonAffiliateLink, shortenUrlAds, shortenUrlFree
+from app.utils import (
+    amazonAffiliateLink,
+    shortenUrlAds,
+    shortenUrlFree,
+    delayBetweenTelegramMessages,
+)
 from app.utils.config import Config
 from app.models import DealsModel, TelegramMessageModel
 from typing import Optional, List, Callable
+from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers import combining, cron
+from apscheduler.events import EVENT_ALL, EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
+import sys
+import logging as log
 
 url = "http://localhost:8000/"
 
@@ -18,9 +28,12 @@ bot = TelegramClient("bot", config.api_id, config.api_hash).start(
     bot_token=config.bot_token
 )
 
+scheduler = BlockingScheduler()
+
 
 async def main():
     db = Database()
+    print("Something is happening")
     channel: int = await get_channel()
     page = 0
     moreToFetch = True
@@ -45,7 +58,7 @@ async def main():
                 TelegramMessageModel(id=msg.id, channel_id=channel, datetime=msg.date),
                 deal.impressionAsin,
             )
-            time.sleep(5)
+            time.sleep(delayBetweenTelegramMessages() * 60)
         page = page + 1
 
 
@@ -53,6 +66,7 @@ async def get_channel() -> int:
     channel_id = config.telegram_channel_id
     channel = await bot.get_input_entity(channel_id)
     if channel and isinstance(channel, InputPeerChannel):
+        log.info(f"channel id for {config.telegram_channel_id} : {channel.channel_id}")
         return channel.channel_id
     else:
         raise BotInvalidError(f"{channel_id} is not a valid channel")
@@ -118,12 +132,27 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
 
 
 def start():
+    print("Bot Started")
     bot.loop.run_until_complete(main())
 
 
-start()
-# schedule.every(15).seconds.do(start)
+def listener_for_telegram(event):
+    if event.code == EVENT_JOB_ERROR:
+        print("The job crashed :(")
+        scheduler.shutdown(wait=False)
 
-# while 1:
-#     schedule.run_pending()
-#     time.sleep(30)
+
+rangeTime = (f"{config.telegram_start_hour}" if config.telegram_start_hour else "*") + (
+    f"-{config.telegram_end_hour}" if config.telegram_end_hour else ""
+)
+triggers = cron.CronTrigger.from_crontab(f"* {rangeTime} * * *")
+
+scheduler.add_job(
+    start,
+    trigger=triggers,
+    max_instances=1,
+    id="telegram",
+    next_run_time=datetime.now(),
+)
+scheduler.add_listener(listener_for_telegram, EVENT_ALL | EVENT_JOB_ERROR)
+scheduler.start()

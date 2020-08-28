@@ -25,8 +25,54 @@ class Config:
                 telegram = config["telegram"]
                 self.telegram_channel_id = telegram["channel_id"]
                 self.telegram_repost_after_days = telegram["repost_after_days"]
+                self.telegram_posts_per_day = telegram["posts_per_day"]
+                if self.telegram_posts_per_day <= 0:
+                    raise ValueError("posts_per_day must be greater than 0")
+
+                if (
+                    telegram["start_hour_of_day"]
+                    and not 0 <= telegram["start_hour_of_day"] <= 23
+                ):
+                    raise ValueError("start_hour_of_day must be between 0 and 23")
+
+                self.telegram_start_hour = (
+                    telegram["start_hour_of_day"]
+                    if telegram["start_hour_of_day"]
+                    else None
+                )
+                if telegram["end_hour_of_day"]:
+                    if not telegram["start_hour_of_day"]:
+                        raise ValueError(
+                            "you cannot set end_hour_of_day if start_hour_of_day is not specified"
+                        )
+                    if telegram["end_hour_of_day"] < telegram["start_hour_of_day"]:
+                        raise ValueError(
+                            "end_hour_of_day must be after start_hour_of_day"
+                        )
+                    if not 0 <= telegram["end_hour_of_day"] <= 23:
+                        raise ValueError("end_hour_of_day must be between 0 and 23")
+
+                    if telegram["delay_message_minutes"]:
+                        raise ValueError(
+                            "end_hour_of_day mutual exclusive with delay_message_minutes"
+                        )
+
+                self.telegram_end_hour = (
+                    telegram["end_hour_of_day"] if telegram["end_hour_of_day"] else None
+                )
+
+                self.telegram_delay_message_minutes = telegram["delay_message_minutes"]
+
+                if (
+                    not self.telegram_end_hour
+                    and not self.telegram_delay_message_minutes
+                ):
+                    raise ValueError(
+                        "you must set end_hour_of_day or delay_message_minutes (Impossible to know how much wait between two posts)"
+                    )
+
         else:
-            raise Exception("You cannot create another SingletonGovt class")
+            raise Exception("You cannot create another Config class")
 
     @staticmethod
     def get_instance():
