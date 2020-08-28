@@ -15,8 +15,8 @@ def get_deals_amazon(
 
 
 @app.get("/camel")
-def get_deals_camel(maxProduct: Optional[int] = 5) -> List[DealsModel]:
-    return fetch_data(Website.CAMEL, {"maxProduct": maxProduct})
+def get_deals_camel(page: Optional[int] = 0) -> List[DealsModel]:
+    return fetch_data(Website.CAMEL, {"page": page})
 
 
 def discountRangeQueryParam(discountRange: DiscountRange) -> str:

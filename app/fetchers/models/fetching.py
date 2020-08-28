@@ -74,7 +74,6 @@ class FetcherCamel(Fetcher):
             "./app/fetchers/selectors/camel_selector.yaml"
         )
         extracted = selector.extract(r.text)
-        maxProduct = params["maxProduct"]
         important_data = zip(
             extracted["discountPrice"],
             extracted["discountAmount"],
@@ -110,7 +109,8 @@ class FetcherCamel(Fetcher):
                     shortDescription,
                 )
             )
-        return list(
+
+        retList = list(
             map(
                 lambda item: DealsModel(
                     dealPrice=item[0],
@@ -123,4 +123,5 @@ class FetcherCamel(Fetcher):
                 ),
                 dataAsinAndOriginalPrice,
             )
-        )[:maxProduct]
+        )
+        return retList

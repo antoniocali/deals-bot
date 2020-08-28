@@ -34,7 +34,8 @@ class Database:
             deal = AmazonDeal.get(AmazonDeal.asin == asin)
         except DoesNotExist:
             deal = None
-        return deal
+        finally:
+            return deal
 
     def _createDeal(self, deal: DealsModel) -> AmazonDeal:
         deal = AmazonDeal.create(
@@ -48,18 +49,15 @@ class Database:
         )
         return deal
 
-    def upsertDeal(self, deal: DealsModel):
+    def upsertDeal(self, deal: DealsModel) -> AmazonDeal:
         retDeal = self.getDeal(deal.impressionAsin)
         if not retDeal:
-            self._createDeal(deal)
+            return self._createDeal(deal)
         elif float(deal.dealPrice) < float(retDeal.deal_price):
             retDeal.deal_price = deal.dealPrice
             retDeal.update_on = datetime.now()
             retDeal.save()
-
-    def upsertDeals(self, deals: List[DealsModel]):
-        for deal in deals:
-            self.upsertDeal(deal)
+        return retDeal
 
     def _createTelegramMessage(
         self, telegramMsg: TelegramMessageModel, asin: str
@@ -73,8 +71,48 @@ class Database:
                 channel_id=telegramMsg.channel_id,
                 asin=deal,
                 sent_on=telegramMsg.datetime,
+                updated_on=telegramMsg.datetime,
             )
             return telegram
+
+    def getTelegramMessage(
+        self, telegramMsg: TelegramMessageModel, asin: str
+    ) -> Optional[TelegramMessage]:
+        try:
+            deal = AmazonDeal.get(AmazonDeal.asin == asin)
+            telMsg = TelegramMessage.get(
+                TelegramMessage.id == telegramMsg.id,
+                TelegramMessage.channel_id == telegramMsg.channel_id,
+                TelegramMessage.asin == deal,
+            )
+        except DoesNotExist:
+            telMsg = None
+        finally:
+            return telMsg
+
+    def upsertTelegramMessage(
+        self, telegramMsg: TelegramMessageModel, asin: str
+    ) -> Optional[TelegramMessage]:
+        retTelegram = self.getTelegramMessage(telegramMsg=telegramMsg, asin=asin)
+        if not retTelegram:
+            return self._createTelegramMessage(telegramMsg=telegramMsg, asin=asin)
+        else:
+            retTelegram.updated_on = telegramMsg.datetime
+            retTelegram.save()
+        return retTelegram
+
+    def searchTelegramMessage(
+        self, channel_id: int, asin: str
+    ) -> Optional[TelegramMessage]:
+        try:
+            deal = AmazonDeal.get(AmazonDeal.asin == asin)
+            telMsg = TelegramMessage.get(
+                TelegramMessage.channel_id == channel_id, TelegramMessage.asin == deal
+            )
+        except DoesNotExist:
+            telMsg = None
+        finally:
+            return telMsg
 
     def deals(self):
         deals = AmazonDeal.select()
