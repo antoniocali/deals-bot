@@ -29,7 +29,6 @@ def create_image(
         txtDeal = Image.new("RGBA", im.size, (255, 255, 255, 0))
         d = ImageDraw.Draw(txtDeal)
         # write text
-        print(originalPrice, dealPrice, imageUrl, save_as)
         d.text(
             (width * 0.2, height / 2 + 10),
             ("%.2f" % dealPrice) + currency,
@@ -37,7 +36,7 @@ def create_image(
             fill=(0, 0, 0, 255),
         )
         d.text(
-            (width * 0.2 + 1, height / 2 + 11),
+            (width * 0.2, height / 2 + 8),
             ("%.2f" % dealPrice) + currency,
             font=dealPriceFont,
             fill=(237, 54, 196, 255),
@@ -45,21 +44,20 @@ def create_image(
 
         # Text for OriginalPrice
         originalPriceFont = ImageFont.truetype(config.font_uri, 26)
-        originalPriceBorderFont = ImageFont.truetype(config.font_uri, 28)
         txtOriginal = Image.new("RGBA", im.size, (255, 255, 255, 0))
         dOriginal = ImageDraw.Draw(txtOriginal)
         # write text
+
         dOriginal.text(
             (width * 0.2, height / 2 - 20),
             ("%.2f" % originalPrice) + currency,
             font=originalPriceFont,
-            fill=(0, 0, 0, 255),
-        )
-        dOriginal.text(
-            (width * 0.2, height / 2 - 19),
-            ("%.2f" % originalPrice) + currency,
-            font=originalPriceBorderFont,
             fill=(237, 54, 196, 255),
+        )
+        dOriginal.line(
+            (width * 0.2 - 5, height / 2 - 5, width * 0.2 + 60, height / 2 - 5),
+            fill="black",
+            width=4,
         )
         # Get Image From Web
         imageFromWeb = Image.open(urllib.request.urlopen(imageUrl))
@@ -91,14 +89,4 @@ def create_image(
         )
         out.save(f"{tmpPathUri}/{save_as}.png", "PNG")
     return f"{tmpPathUri}/{save_as}.png"
-
-
-# image_util()
-
-create_image(
-    160.42,
-    134.99,
-    "https://m.media-amazon.com/images/I/41wcXQ95grL._UL320_.jpg",
-    "B089WCSTLY",
-)
 
