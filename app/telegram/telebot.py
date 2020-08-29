@@ -24,6 +24,7 @@ from apscheduler.events import (
     EVENT_JOB_SUBMITTED,
     EVENT_JOB_ADDED,
 )
+from app.generators import image_util
 
 url = "http://localhost:8000/"
 
@@ -42,6 +43,14 @@ async def main():
     valid_deals = get_deals_for_run(database=db, channel_id=channel)
     if valid_deals:
         for deal in valid_deals:
+            path = image_util.create_image(
+                originalPrice=deal.originalPrice,
+                dealPrice=deal.dealPrice,
+                imageUrl=deal.imageUrl,
+                save_as=deal.impressionAsin,
+            )
+            print(path)
+            continue
             db.upsertDeal(deal)
             msg = await bot.send_message(
                 channel,
@@ -59,9 +68,11 @@ async def main():
             time.sleep(delayBetweenTelegramMessages() * 60)
     else:
         # Send message to admin
-        log.info("I couldn't retrieve any new valid deals. I will sleep for a hour before trying again")
+        log.info(
+            "I couldn't retrieve any new valid deals. I will sleep for a hour before trying again"
+        )
         scheduler.pause_job("telegram")
-        time.sleep(60*60)
+        time.sleep(60 * 60)
         log.info("Resuming Job and see if new deals appeared.")
         scheduler.resume_job("telegram")
 
@@ -142,19 +153,18 @@ def filter_deals(
                 return deal
             else:
                 log.info(
-                    dbDeal, "already present in database. Check if can post anyway."
+                    f"{dbDeal} already present in database. Check if can post anyway."
                 )
                 last_sent: date = datetime.strptime(
                     searchTelegram.updated_on, "%Y-%m-%d %H:%M:%S%z"
                 ).date()
                 today = datetime.today().date()
-                timedifference: timedelta = last_sent - today
+                timedifference: timedelta = today - last_sent
                 if timedifference.days >= config.telegram_repost_after_days:
                     return deal
                 else:
                     log.info(
-                        dbDeal,
-                        f"Cannot post - Days passed {timedifference.days} from last post",
+                        f"{dbDeal} - Cannot post - Days passed {timedifference.days} from last post",
                     )
                     return None
         return deal
@@ -215,5 +225,6 @@ scheduler.add_job(
 log.info("Adding event listener for issue")
 scheduler.add_listener(listener_for_telegram, EVENT_ALL | EVENT_JOB_ERROR)
 log.info("Scheduler Started")
-scheduler.start()
+# scheduler.start()
+start()
 

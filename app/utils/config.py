@@ -33,9 +33,11 @@ class Config:
             log.info(f"Reading configuration from: {path}")
             with open(path, "r") as stream:
                 config = yaml.safe_load(stream)
+                # API
                 self.api_id = config["api_id"]
                 self.api_hash = config["api_hash"]
                 self.bot_token = config["bot_token"]
+                # Shorten
                 shorten_url = config["shorten_url"]
                 self.short_use_ads = shorten_url.get("use_ads", False)
                 if self.short_use_ads and not shorten_url.get("shortest_token"):
@@ -43,7 +45,9 @@ class Config:
                         "Shortest Token must be set if use_ads is set to True"
                     )
                 self.shortest_token = shorten_url["shortest_token"]
+                # Amazon
                 self.amazon_affiliate = config["amazon_affiliate"]
+                # Telegram
                 telegram = config["telegram"]
                 self.telegram_channel_id = telegram["channel_id"]
                 self.telegram_repost_after_days = telegram["repost_after_days"]
@@ -92,6 +96,14 @@ class Config:
                     raise ValueError(
                         "you must set end_hour_of_day or delay_message_minutes (Impossible to know how much wait between two posts)"
                     )
+                # Image
+                image = config["image_generator"]
+                self.image_template_uri = image["image_template_uri"]
+                if not self.image_template_uri:
+                    raise ValueError("image_template_uri must be set")
+                self.font_uri = image["font_uri"]
+                if not self.font_uri:
+                    raise ValueError("font_uri must be set")
 
         else:
             raise Exception("You cannot create another Config class")

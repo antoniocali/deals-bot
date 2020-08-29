@@ -1,34 +1,73 @@
-from PIL import Image, ImageDraw
+from app.utils.config import Config
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import urllib.request
-import aggdraw
-import os
+from os import path, makedirs
 
-width = 550
-height = 350
-url = "http://www.antoniocali.com/blog/wp-content/uploads/2016/12/logo.png"
 right = 180
 up = 80
 
-# urllib.request.ssl.
-def create_image(price, imageUrl, name):
-    with Image.new("RGBA", (width, height), (255, 255, 255, 255)) as im:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        print(current_dir)
-        d = aggdraw.Draw(im)
-        p = aggdraw.Pen((180, 20, 200), 80)
-        # get a font
-        text1 = aggdraw.Font((0, 0, 0), "slotdown.otf", 40)
-        # /Users/andav1/Documents/Python/deals-bot/BillionDreams_PERSONAL.ttf
+config = Config.get_instance()
+tmpPath = "./app/generators/tmp"
+if not path.exists(path.abspath(tmpPath)):
+    makedirs(path.abspath(path.dirname(tmpPath)))
 
-        text2 = aggdraw.Font((180, 20, 200), "slotdown.otf", 42)
-        print(price)
-        # get image from web
+# urllib.request.ssl.
+def create_image(
+    originalPrice: float,
+    dealPrice: float,
+    imageUrl: str,
+    save_as: str,
+    currency: str = "€",
+) -> str:
+    with Image.open(config.image_template_uri) as im:
+        tmpPathUri = path.abspath(tmpPath)
+        height = im.size[1]
+        width = im.size[0]
+        # Text for DealPrice
+        dealPriceFont = ImageFont.truetype(config.font_uri, 60)
+        dealPriceBorderFont = ImageFont.truetype(config.font_uri, 62)
+        txtDeal = Image.new("RGBA", im.size, (255, 255, 255, 0))
+        d = ImageDraw.Draw(txtDeal)
+        # write text
+        print(originalPrice, dealPrice, imageUrl, save_as)
+        d.text(
+            (width * 0.2, height / 2 + 10),
+            ("%.2f" % dealPrice) + currency,
+            font=dealPriceBorderFont,
+            fill=(0, 0, 0, 255),
+        )
+        d.text(
+            (width * 0.2 + 1, height / 2 + 11),
+            ("%.2f" % dealPrice) + currency,
+            font=dealPriceFont,
+            fill=(237, 54, 196, 255),
+        )
+
+        # Text for OriginalPrice
+        originalPriceFont = ImageFont.truetype(config.font_uri, 26)
+        originalPriceBorderFont = ImageFont.truetype(config.font_uri, 28)
+        txtOriginal = Image.new("RGBA", im.size, (255, 255, 255, 0))
+        dOriginal = ImageDraw.Draw(txtOriginal)
+        # write text
+        dOriginal.text(
+            (width * 0.2, height / 2 - 20),
+            ("%.2f" % originalPrice) + currency,
+            font=originalPriceFont,
+            fill=(0, 0, 0, 255),
+        )
+        dOriginal.text(
+            (width * 0.2, height / 2 - 19),
+            ("%.2f" % originalPrice) + currency,
+            font=originalPriceBorderFont,
+            fill=(237, 54, 196, 255),
+        )
+        # Get Image From Web
         imageFromWeb = Image.open(urllib.request.urlopen(imageUrl))
         background = Image.new("RGBA", imageFromWeb.size, (255, 255, 255, 0))
         background.paste(imageFromWeb)
-        # resize
-        basewidth = 150
-        baseheight = 200
+        # Resize Image From Web
+        basewidth = 180
+        baseheight = 220
         landscape = True if imageFromWeb.size[0] >= imageFromWeb.size[1] else False
         if landscape:
             wpercent = basewidth / float(imageFromWeb.size[0])
@@ -37,21 +76,29 @@ def create_image(price, imageUrl, name):
         else:
             wpercent = baseheight / float(imageFromWeb.size[1])
             wsize = int((float(imageFromWeb.size[0]) * float(wpercent)))
-            img = background.resize((baseheight, wsize), Image.ANTIALIAS)
+            img = background.resize((wsize, baseheight), Image.ANTIALIAS)
         finalHeightSize = img.size[1]
         finalWidthSize = img.size[0]
-        # write text
-        d.text((50, height / 2 + 10), price, text2)
-        d.text((50, height / 2 + 10), price, text1)
-        # draw arc in the upper part
-        d.pieslice((0, -height / 5, width, height / 5), 180, 0, p)
-        d.flush()
-        # write to stdout
-        im.paste(
+
+        out = Image.alpha_composite(im, txtDeal)
+        out = Image.alpha_composite(out, txtOriginal)
+        out.paste(
             img,
             (
                 int(width / 2 + finalWidthSize / 4),
                 int(height / 2 - finalHeightSize / 4),
             ),
         )
-        im.save(f"{name}.png", "PNG")
+        out.save(f"{tmpPathUri}/{save_as}.png", "PNG")
+    return f"{tmpPathUri}/{save_as}.png"
+
+
+# image_util()
+
+create_image(
+    160.42,
+    134.99,
+    "https://m.media-amazon.com/images/I/41wcXQ95grL._UL320_.jpg",
+    "B089WCSTLY",
+)
+
