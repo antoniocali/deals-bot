@@ -58,6 +58,7 @@ async def main():
                     deal.dealPrice,
                     deal.percentOff,
                     deal.impressionAsin,
+                    deal.description
                 ),
                 force_document=False,
             )
@@ -174,7 +175,9 @@ def filter_deals(
     return filter_deal_wrapper
 
 
-def message(originalPrice: float, dealPrice: float, discount: int, asin: str) -> str:
+def message(
+    originalPrice: float, dealPrice: float, discount: int, asin: str, description: str
+) -> str:
     affialiateLink = amazonAffiliateLink(asin)
     shortUrlAds = config.short_use_ads
     shortUrl = (
@@ -184,7 +187,9 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
     )
     # In case short Url doesn't work I use long url
     shortUrl = shortUrl if shortUrl else affialiateLink
-    return """💸💸💸 **Incredibile Offerta** 💸💸💸
+    return """
+    ⚡ {description}
+    💸💸💸 **Incredibile Offerta** 💸💸💸
     👎 Prezzo Originale: {originalPrice}€
     💰 Prezzo Scontato: {dealPrice}€
     Con **Sconto** del **{discount}%** 🤑🤑
@@ -195,6 +200,7 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
         dealPrice="%.2f" % dealPrice,
         discount=discount,
         shortUrl=shortUrl,
+        description=description,
     )
 
 
@@ -220,7 +226,7 @@ rangeTime = (f"{config.telegram_start_hour}" if config.telegram_start_hour else 
     f"-{config.telegram_end_hour}" if config.telegram_end_hour else ""
 )
 log.info(f"Range Time of Working Hours: {rangeTime}")
-triggers = cron.CronTrigger.from_crontab(f"* {rangeTime} * * *")
+triggers = cron.CronTrigger.from_crontab(f"*/5 {rangeTime} * * *")
 log.info("Creating the Scheduler")
 scheduler.add_job(
     start,
