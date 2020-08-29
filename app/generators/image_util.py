@@ -1,7 +1,8 @@
+from genericpath import exists
 from app.utils.config import Config
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import urllib.request
-from os import path, makedirs
+from os import path, makedirs, remove
 
 right = 180
 up = 80
@@ -90,3 +91,7 @@ def create_image(
         out.save(f"{tmpPathUri}/{save_as}.png", "PNG")
     return f"{tmpPathUri}/{save_as}.png"
 
+
+def delete_tmp_image(path: str):
+    if exists(path):
+        remove(path)

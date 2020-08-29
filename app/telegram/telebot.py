@@ -49,22 +49,24 @@ async def main():
                 imageUrl=deal.imageUrl,
                 save_as=deal.impressionAsin,
             )
-            print(path)
-            continue
             db.upsertDeal(deal)
-            msg = await bot.send_message(
+            msg = await bot.send_file(
                 channel,
-                message=message(
+                file=path,
+                caption=message(
                     deal.originalPrice,
                     deal.dealPrice,
                     deal.percentOff,
                     deal.impressionAsin,
                 ),
+                force_document=False
             )
+
             db.upsertTelegramMessage(
                 TelegramMessageModel(id=msg.id, channel_id=channel, datetime=msg.date),
                 deal.impressionAsin,
             )
+            image_util.delete_tmp_image(path)
             time.sleep(delayBetweenTelegramMessages() * 60)
     else:
         # Send message to admin
@@ -225,6 +227,5 @@ scheduler.add_job(
 log.info("Adding event listener for issue")
 scheduler.add_listener(listener_for_telegram, EVENT_ALL | EVENT_JOB_ERROR)
 log.info("Scheduler Started")
-# scheduler.start()
-start()
+scheduler.start()
 
