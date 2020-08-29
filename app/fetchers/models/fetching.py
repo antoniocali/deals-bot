@@ -67,13 +67,21 @@ class FetcherCamel(Fetcher):
         self.headers = headers
 
     def fetch_data(self, params: dict = None) -> List[DealsModel]:
+        page = params["page"]
         r = requests.get(
-            "https://it.camelcamelcamel.com/top_drops", headers=self.headers
+            f"https://it.camelcamelcamel.com/top_drops?p={page}", headers=self.headers
         )
         selector = selectorlib.Extractor.from_yaml_file(
             "./app/fetchers/selectors/camel_selector.yaml"
         )
         extracted = selector.extract(r.text)
+        if (
+            not extracted["imageUrl"]
+            or not extracted["discountPrice"]
+            or not extracted["discountAmount"]
+            or not extracted["link"]
+        ):
+            return list()
         important_data = zip(
             extracted["discountPrice"],
             extracted["discountAmount"],

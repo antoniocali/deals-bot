@@ -15,7 +15,7 @@ def get_deals_amazon(
 
 
 @app.get("/camel")
-def get_deals_camel(page: Optional[int] = 0) -> List[DealsModel]:
+def get_deals_camel(page: Optional[int] = 1) -> List[DealsModel]:
     return fetch_data(Website.CAMEL, {"page": page})
 
 

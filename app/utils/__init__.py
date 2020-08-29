@@ -2,6 +2,7 @@ import requests
 from app.utils.config import Config
 from typing import Optional
 
+
 config = Config.get_instance()
 
 
@@ -49,5 +50,3 @@ def delayBetweenTelegramMessages() -> int:
         start = config.telegram_start_hour
         stop = config.telegram_end_hour
         return int((stop - start) * 60 / posts)
-
-

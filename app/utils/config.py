@@ -1,4 +1,24 @@
 import yaml
+from app.logger import getLogger
+
+log = getLogger("CONFIG")
+
+templated = set(
+    [
+        "api_id",
+        "api_hash",
+        "bot_token",
+        "short_use_ads",
+        "shortest_token",
+        "amazon_affiliate",
+        "telegram_channel_id",
+        "telegram_respost_after_days",
+        "telegram_posts_per_day",
+        "telegram_start_hour",
+        "telegram_end_hour",
+        "telegram_delay_message_minutes",
+    ]
+)
 
 
 class Config:
@@ -9,7 +29,9 @@ class Config:
        """
         if Config.__instance__ is None:
             Config.__instance__ = self
-            with open("./app/config/config.yaml", "r") as stream:
+            path = "./app/config/config.yaml"
+            log.info(f"Reading configuration from: {path}")
+            with open(path, "r") as stream:
                 config = yaml.safe_load(stream)
                 self.api_id = config["api_id"]
                 self.api_hash = config["api_hash"]
@@ -79,6 +101,12 @@ class Config:
         """ Static method to fetch the current instance.
        """
         if not Config.__instance__:
-            Config()
+            obj = Config()
+            log.info("Configuration Finished")
+            for key in sorted(list(set(dir(obj)).intersection(templated))):
+                log.info(
+                    "{:<35}{:<40}".format(
+                        key, getattr(obj, key) if getattr(obj, key) else ""
+                    )
+                )
         return Config.__instance__
-
