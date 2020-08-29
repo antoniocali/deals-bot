@@ -59,7 +59,7 @@ async def main():
                     deal.percentOff,
                     deal.impressionAsin,
                 ),
-                force_document=False
+                force_document=False,
             )
 
             db.upsertTelegramMessage(
@@ -184,13 +184,18 @@ def message(originalPrice: float, dealPrice: float, discount: int, asin: str) ->
     )
     # In case short Url doesn't work I use long url
     shortUrl = shortUrl if shortUrl else affialiateLink
-    return f"""**Incredibile Offerta**
-    **Prezzo Originale**: {"%.2f" % originalPrice}€
-    **Prezzo Scontato**: {"%.2f" % dealPrice}€
-    **Sconto**: {discount}%
+    return """💸💸💸 **Incredibile Offerta** 💸💸💸
+    👎 Prezzo Originale: {originalPrice}€
+    💰 Prezzo Scontato: {dealPrice}€
+    Con **Sconto** del **{discount}%** 🤑🤑
 
-    __URL__: {shortUrl}
-    """
+    __URL Offerta__: {shortUrl}
+    """.format(
+        originalPrice="%.2f" % originalPrice,
+        dealPrice="%.2f" % dealPrice,
+        discount=discount,
+        shortUrl=shortUrl,
+    )
 
 
 def start():

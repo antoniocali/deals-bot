@@ -8,3 +8,4 @@ log.txt
 *.session
 config.yaml
 database
+*.session-journal
