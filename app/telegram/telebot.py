@@ -2,7 +2,7 @@ from app.logger import getLogger
 from datetime import datetime, timedelta, date
 from app.db.database import Database
 from telethon import TelegramClient
-from telethon.tl.types import InputPeerChannel
+from telethon.tl.types import InputPeerChannel, InputPeerUser
 from telethon.errors import BotInvalidError
 import requests
 import time
@@ -43,32 +43,20 @@ async def main():
     valid_deals = get_deals_for_run(database=db, channel_id=channel)
     if valid_deals:
         for deal in valid_deals:
-            path = image_util.create_image(
-                originalPrice=deal.originalPrice,
-                dealPrice=deal.dealPrice,
-                imageUrl=deal.imageUrl,
-                save_as=deal.impressionAsin,
+            await send_message(
+                deal=deal, database=db, channel=channel, save_on_db=True
             )
-            db.upsertDeal(deal)
-            msg = await bot.send_file(
-                channel,
-                file=path,
-                caption=message(
-                    deal.originalPrice,
-                    deal.dealPrice,
-                    deal.percentOff,
-                    deal.impressionAsin,
-                    deal.description
-                ),
-                force_document=False,
+            next_run = datetime.now() + timedelta(
+                minutes=delayBetweenTelegramMessages()
             )
+            log.info(
+                "Next post at {next_run}".format(
+                    next_run=next_run.strftime("%Y/%m/%d %H:%M:%S")
+                )
+            )
+            while datetime.now() <= next_run:
+                time.sleep(60)
 
-            db.upsertTelegramMessage(
-                TelegramMessageModel(id=msg.id, channel_id=channel, datetime=msg.date),
-                deal.impressionAsin,
-            )
-            image_util.delete_tmp_image(path)
-            time.sleep(delayBetweenTelegramMessages() * 60)
     else:
         # Send message to admin
         log.info(
@@ -83,9 +71,17 @@ async def main():
 async def get_channel() -> int:
     channel_id = config.telegram_channel_id
     channel = await bot.get_input_entity(channel_id)
-    if channel and isinstance(channel, InputPeerChannel):
-        log.info(f"channel id for {config.telegram_channel_id} : {channel.channel_id}")
-        return channel.channel_id
+    if channel:
+        if isinstance(channel, InputPeerUser):
+            log.info(f"user id for {config.telegram_channel_id} : {channel.user_id}")
+            return channel.user_id
+        elif isinstance(channel, InputPeerChannel):
+            log.info(
+                f"channel id for {config.telegram_channel_id} : {channel.channel_id}"
+            )
+            return channel.channel_id
+        else:
+            raise BotInvalidError(f"{channel_id} is not a valid channel")
     else:
         raise BotInvalidError(f"{channel_id} is not a valid channel")
 
@@ -170,7 +166,8 @@ def filter_deals(
                         f"{dbDeal} - Cannot post - Days passed {timedifference.days} from last post",
                     )
                     return None
-        return deal
+        else:
+            return deal
 
     return filter_deal_wrapper
 
@@ -205,8 +202,39 @@ def message(
 
 
 def start():
-    log.info("Bot Started")
+    log.info("Run Started")
     bot.loop.run_until_complete(main())
+
+
+async def send_message(
+    deal: DealsModel, database: Database, channel: int, save_on_db: bool = True
+):
+    path = image_util.create_image(
+        originalPrice=deal.originalPrice,
+        dealPrice=deal.dealPrice,
+        imageUrl=deal.imageUrl,
+        save_as=deal.impressionAsin,
+    )
+    if save_on_db:
+        database.upsertDeal(deal)
+    msg = await bot.send_file(
+        channel,
+        file=path,
+        caption=message(
+            deal.originalPrice,
+            deal.dealPrice,
+            deal.percentOff,
+            deal.impressionAsin,
+            deal.description,
+        ),
+        force_document=False,
+    )
+    if save_on_db:
+        database.upsertTelegramMessage(
+            TelegramMessageModel(id=msg.id, channel_id=channel, datetime=msg.date),
+            deal.impressionAsin,
+        )
+    image_util.delete_tmp_image(path)
 
 
 def listener_for_telegram(event):
@@ -222,7 +250,9 @@ def listener_for_telegram(event):
 
 
 log.info("TELEBOT STARTED")
-rangeTime = (f"{config.telegram_start_hour}" if config.telegram_start_hour else "*") + (
+log.info("Adding event listener for issue")
+scheduler.add_listener(listener_for_telegram, EVENT_ALL | EVENT_JOB_ERROR)
+rangeTime = (f"{config.telegram_start_hour}" if config.telegram_start_hour else "") + (
     f"-{config.telegram_end_hour}" if config.telegram_end_hour else ""
 )
 log.info(f"Range Time of Working Hours: {rangeTime}")
@@ -235,8 +265,5 @@ scheduler.add_job(
     id="telegram",
     next_run_time=datetime.now(),
 )
-log.info("Adding event listener for issue")
-scheduler.add_listener(listener_for_telegram, EVENT_ALL | EVENT_JOB_ERROR)
 log.info("Scheduler Started")
 scheduler.start()
-
