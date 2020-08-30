@@ -1,6 +1,10 @@
+from __future__ import annotations
 import yaml
 from app.logger import getLogger
 from typing import Optional
+from telethon import TelegramClient
+from telethon.errors import BotInvalidError
+from telethon.tl.types import InputPeerUser, InputPeerChannel
 
 log = getLogger("CONFIG")
 
@@ -17,11 +21,12 @@ templated = set(
         "telegram_posts_per_day",
         "telegram_start_hour",
         "telegram_end_hour",
+        "telegram_id",
         "telegram_delay_message_minutes",
         "deals_min_discount",
         "deals_max_price",
         "image_template_uri",
-        "font_uri"
+        "font_uri",
     ]
 )
 
@@ -55,7 +60,7 @@ class Config:
                 # Deals
                 deals = config["deals"]
                 self.deals_min_discount: Optional[int] = deals.get("min_discount", None)
-                self.deals_max_price: Optional[float] = deals.get("max_price", None)
+                self.deals_max_price: Optional[int] = deals.get("max_price", None)
                 # Telegram
                 telegram = config["telegram"]
                 self.telegram_channel_id = telegram["channel_id"]
@@ -114,20 +119,46 @@ class Config:
                 if not self.font_uri:
                     raise ValueError("font_uri must be set")
 
+                bot = (
+                    TelegramClient("config", self.api_id, self.api_hash)
+                    .start(bot_token=self.bot_token)
+                    .start()
+                )
+                with bot:
+                    self.telegram_id = bot.loop.run_until_complete(
+                        self._get_channel_id(bot, self.telegram_channel_id)
+                    )
+
         else:
             raise Exception("You cannot create another Config class")
 
+    async def _get_channel_id(self, bot: TelegramClient, channel_id: str) -> int:
+        log.info(f"Retrieving ID for {channel_id}")
+        channel = await bot.get_input_entity(channel_id)
+        if channel:
+            if isinstance(channel, InputPeerUser):
+                return channel.user_id
+            elif isinstance(channel, InputPeerChannel):
+                return channel.channel_id
+            else:
+                raise BotInvalidError(f"{channel_id} is not a valid channel")
+        else:
+            raise BotInvalidError(f"{channel_id} is not a valid channel")
+
     @staticmethod
-    def get_instance():
+    def get_instance() -> Config:
         """ Static method to fetch the current instance.
        """
         if not Config.__instance__:
             obj = Config()
-            log.info("Configuration Finished")
+            log.info("Configuration Found")
+            log.info("{:<35}{:<40}".format("--KEY--", "--VALUE--"))
             for key in sorted(list(set(dir(obj)).intersection(templated))):
                 log.info(
                     "{:<35}{:<40}".format(
                         key, getattr(obj, key) if getattr(obj, key) else ""
                     )
                 )
+            log.info("Configuration Finished")
+            return obj
         return Config.__instance__

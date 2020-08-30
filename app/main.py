@@ -29,4 +29,3 @@ def get_deals_camel(
 def discountRangeQueryParam(discountRange: DiscountRange) -> str:
     switcher = {0: "10-25%", 1: "25-50%", 2: "50-70%", 3: "70-"}
     return f"discountRanges:{switcher[discountRange]}"
-

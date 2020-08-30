@@ -3,14 +3,12 @@ from app.utils.config import Config
 from typing import Optional
 
 
-config = Config.get_instance()
-
-
 def removeSpecialFromPrice(textInput: str) -> str:
     return textInput.replace(".", "").replace(",", ".").replace("€", "")
 
 
 def shortenUrlAds(url: str) -> Optional[str]:
+    config = Config.get_instance()
     provider = "https://api.shorte.st/v1/data/url"
     token = config.shortest_token
     headers = {"public-api-token": token}
@@ -38,11 +36,13 @@ def shortenUrlFree(url: str) -> Optional[str]:
 
 
 def amazonAffiliateLink(asin: str) -> str:
+    config = Config.get_instance()
     affiliateToken = config.amazon_affiliate
     return f"https://www.amazon.it/gp/product/{asin}/ref=as_li_tl?creativeASIN={asin}&tag={affiliateToken}"
 
 
 def delayBetweenTelegramMessages() -> int:
+    config = Config.get_instance()
     if config.telegram_delay_message_minutes:
         return config.telegram_delay_message_minutes
     else:
