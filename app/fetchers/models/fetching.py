@@ -67,9 +67,12 @@ class FetcherCamel(Fetcher):
         self.headers = headers
 
     def fetch_data(self, params: dict = None) -> List[DealsModel]:
-        page = params["page"]
+        pageQuery = params["page"]
+        discountQuery = params["min_discount"]
+        maxPrice = params["max_price"]
         r = requests.get(
-            f"https://it.camelcamelcamel.com/top_drops?p={page}", headers=self.headers
+            f"https://it.camelcamelcamel.com/top_drops?p={pageQuery}",
+            headers=self.headers,
         )
         selector = selectorlib.Extractor.from_yaml_file(
             "./app/fetchers/selectors/camel_selector.yaml"
@@ -92,16 +95,33 @@ class FetcherCamel(Fetcher):
         regex = r"product\/([A-Z0-9]{10})\?"
         dataAsinAndOriginalPrice = []
         for elem in important_data:
+            # Look for the asin
             matcher = re.search(regex, elem[4])
+            # If cannot retrieve the Asin
             if not matcher:
+                # Skip the element
                 continue
+
+            # If the element is outofstock
             if elem[0].lower() == "out of stock":
+                # skip the element
                 continue
+
             discountPrice = float(removeSpecialFromPrice(elem[0]))
+            # Check if discountPrice is higher than maxPrice
+            if maxPrice and discountPrice > float(maxPrice):
+                # In case it skips the element
+                continue
+
             discountAmount = float(removeSpecialFromPrice(elem[1]))
             discount = 100 - int(
                 (discountPrice / (discountPrice + discountAmount)) * 100
             )
+            # Check if discount is lower than what we want
+            if discountQuery and discount < discountQuery:
+                # In case it skips the element
+                continue
+
             description = elem[2]
             shortDescription = (
                 description if len(description) < 30 else description[:30]

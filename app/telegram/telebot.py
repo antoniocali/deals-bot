@@ -43,9 +43,7 @@ async def main():
     valid_deals = get_deals_for_run(database=db, channel_id=channel)
     if valid_deals:
         for deal in valid_deals:
-            await send_message(
-                deal=deal, database=db, channel=channel, save_on_db=True
-            )
+            await send_message(deal=deal, database=db, channel=channel, save_on_db=True)
             next_run = datetime.now() + timedelta(
                 minutes=delayBetweenTelegramMessages()
             )
@@ -92,9 +90,11 @@ def get_deals_for_run(
     page = 1
     moreToFetch = True
     postPerDay = config.telegram_posts_per_day
+    min_discount = config.deals_min_discount
+    max_price = config.deals_max_price
     deals = list()
     while moreToFetch:
-        data = fetch_more(page)
+        data = fetch_more(page=page, min_discount=min_discount, max_price=max_price)
         if not data:
             log.info("No More Data to Fetch")
             moreToFetch = False
@@ -111,10 +111,17 @@ def get_deals_for_run(
 
 
 # Fetch as more deals as I can from Camel
-def fetch_more(page: int) -> Optional[List[dict]]:
+def fetch_more(
+    page: int, min_discount: Optional[int] = None, max_price: Optional[int] = None
+) -> Optional[List[dict]]:
     """ Fetch as much deals as I can from Camel
     """
-    req = requests.get(url + f"camel?page={page}")
+    queryParams = f"?page={page}"
+    if min_discount:
+        queryParams += f"&min_discount={min_discount}"
+    if max_price:
+        queryParams += f"&max_price={max_price}"
+    req = requests.get(url + f"camel{queryParams}")
     if req.ok:
         response = req.json()
         return response

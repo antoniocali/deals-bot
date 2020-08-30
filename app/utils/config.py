@@ -1,5 +1,6 @@
 import yaml
 from app.logger import getLogger
+from typing import Optional
 
 log = getLogger("CONFIG")
 
@@ -47,6 +48,10 @@ class Config:
                 self.shortest_token = shorten_url["shortest_token"]
                 # Amazon
                 self.amazon_affiliate = config["amazon_affiliate"]
+                # Deals
+                deals = config["deals"]
+                self.deals_min_discount: Optional[int] = deals.get("min_discount", None)
+                self.deals_max_price: Optional[float] = deals.get("max_price", None)
                 # Telegram
                 telegram = config["telegram"]
                 self.telegram_channel_id = telegram["channel_id"]
