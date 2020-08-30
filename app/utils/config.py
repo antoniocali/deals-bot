@@ -18,6 +18,10 @@ templated = set(
         "telegram_start_hour",
         "telegram_end_hour",
         "telegram_delay_message_minutes",
+        "deals_min_discount",
+        "deals_max_price",
+        "image_template_uri",
+        "font_uri"
     ]
 )
 
