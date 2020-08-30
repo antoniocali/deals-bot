@@ -11,7 +11,6 @@ from apscheduler.events import (
     EVENT_JOB_SUBMITTED,
     EVENT_JOB_EXECUTED,
 )
-import time
 from datetime import datetime, date, timedelta
 from app.utils import Config
 from app.db.database import Database
