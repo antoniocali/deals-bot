@@ -31,7 +31,6 @@ bot = TelegramClient("bot", config.api_id, config.api_hash).start(
 
 scheduler = AsyncIOScheduler()
 log = getLogger("TELEBOT")
-log.info("HELLO")
 messageQueue = MessageQueue.get_instance()
 
 
