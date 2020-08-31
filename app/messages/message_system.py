@@ -114,17 +114,16 @@ class MessageQueue:
         return deals
 
     def _remove_similar_products(self, deals: List[DealsModel]) -> List[DealsModel]:
-        tmpList: List[DealsModel] = deals.copy()
-        for deals_1 in tmpList:
-            to_remove = list()
-            for deals_2 in tmpList:
-                if deals_1 != deals_2:
-                    similarity = Utils.cosine_distance(deals_1.description, deals_2.description)
-                    if similarity > 0.85:
-                        to_remove.append(deals_2)
-            if to_remove:
-                for elem in to_remove:
-                    tmpList.remove(elem)
+        tmpList: List[DealsModel] = list()
+        for deal in deals:
+            if not any(
+                map(
+                    lambda x: False
+                    if x == deal
+                    else Utils.cosine_distance(x.description, deal.description) > 0.85, tmpList
+                )
+            ):
+                tmpList.append(deal)
 
         return tmpList
 
