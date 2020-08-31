@@ -25,11 +25,11 @@ class FetcherAmazon(Fetcher):
             headers=self.headers,
         )
 
-        reg = r"\"dealDetails\"\s*:\s*{(.*)}\n\s*},\n"
+        reg = r"\"dealDetails\"\s*:\s*{(.*?)}\s*\n\s*},"
         matcher = re.search(reg, r.text, flags=re.DOTALL)
         if not matcher:
             return []
-        importantData = "{" + matcher.group(0)[:-2] + "}"
+        importantData = "{" + matcher.group(0)[:-2] + "} }"
         extracted = json.loads(importantData)
         mandatoryKeys = set(
             [

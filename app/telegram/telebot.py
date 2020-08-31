@@ -21,7 +21,7 @@ from apscheduler.events import (
     EVENT_JOB_ADDED,
 )
 from app.generators import image_util
-from app.queue.message_system import MessageQueue
+from app.messages.message_system import MessageQueue
 
 
 config = Config.get_instance()
