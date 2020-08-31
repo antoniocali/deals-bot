@@ -3,13 +3,8 @@ from datetime import datetime, timedelta
 from app.db.database import Database
 from telethon import TelegramClient
 import time
-from app.utils import (
-    amazonAffiliateLink,
-    shortenUrlAds,
-    shortenUrlFree,
-    delayBetweenTelegramMessages,
-)
-from app.utils.config import Config
+from app.utils import Utils
+from app.config.config import Config
 from app.models import DealsModel, TelegramMessageModel
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers import interval
@@ -44,7 +39,9 @@ async def message_system():
         await send_message(
             deal=valid_deal, database=db, channel=channel, save_on_db=True
         )
-        next_run = datetime.now() + timedelta(minutes=delayBetweenTelegramMessages())
+        next_run = datetime.now() + timedelta(
+            minutes=Utils.delayBetweenTelegramMessages()
+        )
         log.info(
             "Next post at {next_run}".format(
                 next_run=next_run.strftime("%Y/%m/%d %H:%M:%S")
@@ -64,12 +61,12 @@ async def message_system():
 def message(
     originalPrice: float, dealPrice: float, discount: int, asin: str, description: str
 ) -> str:
-    affialiateLink = amazonAffiliateLink(asin)
+    affialiateLink = Utils.amazonAffiliateLink(asin)
     shortUrlAds = config.short_use_ads
     shortUrl = (
-        shortenUrlAds(amazonAffiliateLink(asin))
+        Utils.shortenUrlAds(affialiateLink)
         if shortUrlAds
-        else shortenUrlFree(amazonAffiliateLink(asin))
+        else Utils.shortenUrlFree(affialiateLink)
     )
     # In case short Url doesn't work I use long url
     shortUrl = shortUrl if shortUrl else affialiateLink
@@ -141,7 +138,7 @@ def start():
         f"{config.telegram_start_hour}" if config.telegram_start_hour else ""
     ) + (f"-{config.telegram_end_hour}" if config.telegram_end_hour else "")
     log.info(f"Range Time of Working Hours: {rangeTime}")
-    triggers = interval.IntervalTrigger(minutes=delayBetweenTelegramMessages())
+    triggers = interval.IntervalTrigger(minutes=Utils.delayBetweenTelegramMessages())
     log.info("Creating the Scheduler")
     scheduler.add_job(
         message_system,

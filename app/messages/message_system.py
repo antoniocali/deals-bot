@@ -12,7 +12,7 @@ from apscheduler.events import (
     EVENT_JOB_EXECUTED,
 )
 from datetime import datetime, date, timedelta
-from app.utils import Config
+from app.config.config import Config
 from app.db.database import Database
 import requests
 

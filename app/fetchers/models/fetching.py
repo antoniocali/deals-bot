@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
+from urllib import parse
 from app.models import DealsModel
+import sys
 from typing import List
 import requests
 import re
 import json
 import selectorlib
 from slugify import slugify
-from app.utils import removeSpecialFromPrice
+from app.utils import Utils
 
 
 class Fetcher(ABC):
@@ -107,13 +109,13 @@ class FetcherCamel(Fetcher):
                 # skip the element
                 continue
 
-            discountPrice = float(removeSpecialFromPrice(elem[0]))
+            discountPrice = float(Utils.removeSpecialFromPrice(elem[0]))
             # Check if discountPrice is higher than maxPrice
             if maxPrice and discountPrice > float(maxPrice):
                 # In case it skips the element
                 continue
 
-            discountAmount = float(removeSpecialFromPrice(elem[1]))
+            discountAmount = float(Utils.removeSpecialFromPrice(elem[1]))
             discount = 100 - int(
                 (discountPrice / (discountPrice + discountAmount)) * 100
             )
@@ -153,3 +155,15 @@ class FetcherCamel(Fetcher):
             )
         )
         return retList
+
+
+class InstantGamingFetcher(Fetcher):
+    def __init__(self, headers: dict):
+        self.headers = headers
+
+    def fetch_data(self, params: dict) -> List[DealsModel]:
+        url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
+        r = requests.get(url, headers=self.headers,)
+        return []
+
+

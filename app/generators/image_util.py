@@ -1,6 +1,6 @@
 from genericpath import exists
-from app.utils.config import Config
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from app.config.config import Config
+from PIL import Image, ImageDraw, ImageFont
 import urllib.request
 from os import path, makedirs, remove
 
@@ -12,7 +12,7 @@ tmpPath = "./app/generators/tmp"
 if not path.exists(path.abspath(tmpPath)):
     makedirs(path.abspath(path.dirname(tmpPath)))
 
-# urllib.request.ssl.
+
 def create_image(
     originalPrice: float,
     dealPrice: float,

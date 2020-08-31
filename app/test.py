@@ -15,4 +15,3 @@ headers = {
 }
 amaz = fetching.FetcherAmazon(headers=headers)
 amaz.fetch_data(params={"filter": ""})
-

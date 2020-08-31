@@ -26,4 +26,3 @@ websites = {
 
 def fetch_data(website: Website, params: Optional[dict] = None) -> List[DealsModel]:
     return websites[website].fetch_data(params)
-

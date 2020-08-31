@@ -3,7 +3,7 @@
 *png
 __pycache__
 dump.rdb
-log.txt
+*.txt
 *egg-info
 *.session
 config.yaml
