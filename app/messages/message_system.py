@@ -109,7 +109,7 @@ class MessageQueue:
             deals = self._remove_similar_products(deals)
             if len(deals) >= postPerDay:
                 moreToFetch = False
-                continue
+                break
             page += 1
         return deals
 
