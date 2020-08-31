@@ -1,6 +1,9 @@
 import requests
 from app.config.config import Config
 from typing import Optional
+import math
+import re
+from collections import Counter
 
 
 class Utils:
@@ -52,3 +55,22 @@ class Utils:
             start = config.telegram_start_hour
             stop = config.telegram_end_hour
             return int((stop - start) * 60 / posts)
+
+    @staticmethod
+    def cosine_distance(text_1: str, text_2: str) -> float:
+        def text_to_vector(text: str) -> Counter:
+            words = re.compile(r"\w+").findall(text)
+            return Counter(words)
+
+        vec_1 = text_to_vector(text_1)
+        vec_2 = text_to_vector(text_2)
+        intersection = set(vec_1.keys()) & set(vec_2.keys())
+        numerator = sum([vec_1[x] * vec_2[x] for x in intersection])
+
+        sum1 = sum([vec_1[x] ** 2 for x in list(vec_1.keys())])
+        sum2 = sum([vec_2[x] ** 2 for x in list(vec_2.keys())])
+        denominator = math.sqrt(sum1) * math.sqrt(sum2)
+        if not denominator:
+            return 0.0
+        else:
+            return float(numerator) / denominator

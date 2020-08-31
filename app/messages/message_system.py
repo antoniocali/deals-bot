@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.utils import Utils
 from typing import Optional, List, Callable
 from app.logger import getLogger
 from app.models import DealsModel
@@ -105,11 +106,27 @@ class MessageQueue:
                 ),
             )
             deals.extend(valid_deals)
+            deals = self._remove_similar_products(deals)
             if len(deals) >= postPerDay:
                 moreToFetch = False
                 continue
             page += 1
         return deals
+
+    def _remove_similar_products(self, deals: List[DealsModel]) -> List[DealsModel]:
+        tmpList: List[DealsModel] = deals.copy()
+        for deals_1 in tmpList:
+            to_remove = list()
+            for deals_2 in tmpList:
+                if deals_1 != deals_2:
+                    similarity = Utils.cosine_distance(deals_1.description, deals_2.description)
+                    if similarity > 0.85:
+                        to_remove.append(deals_2)
+            if to_remove:
+                for elem in to_remove:
+                    tmpList.remove(elem)
+
+        return tmpList
 
     def _fetch_more(
         self,
