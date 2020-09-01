@@ -19,6 +19,7 @@ def create_image(
     imageUrl: str,
     save_as: str,
     currency: str = "€",
+    to_test: bool = False
 ) -> str:
     with Image.open(config.image_template_uri) as im:
         tmpPathUri = path.abspath(tmpPath)
@@ -88,7 +89,11 @@ def create_image(
                 int(height / 2 - finalHeightSize / 4),
             ),
         )
-        out.save(f"{tmpPathUri}/{save_as}.png", "PNG")
+        if to_test:
+            out.show()
+            return ""
+        else:
+            out.save(f"{tmpPathUri}/{save_as}.png", "PNG")
     return f"{tmpPathUri}/{save_as}.png"
 
 
