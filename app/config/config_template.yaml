@@ -1,0 +1,30 @@
+# Telegram
+api_id: 
+api_hash: 
+bot_token: 
+shorten_url:
+# if true use short.est that let you earn money on links, if false => goolnk
+  use_ads: 
+# Short.est Token
+  shortest_token: 
+# amazon
+amazon_affiliate: 
+deals:
+  min_discount: 
+  max_price: 
+# telegram 
+telegram:
+  channel_id: 
+  repost_after_days: 
+  posts_per_day: 
+  # What hour of the day start to post [0-23]. Can be empty (it means it goes all the time)
+  start_hour_of_day:  
+  # What time stop to post. [0-23]. Cannot be set if start_hour is empty
+  end_hour_of_day: 
+  # Mutual Exclusive with end_hour_of_day.
+  # If end_hour_of_day is provided -> It automatically calculate the delays between messages using posts_per_day
+  # otherwise it will post every delay_message_minutes
+  delay_message_minutes: 
+image_generator:
+  image_template_uri: 
+  font_uri: 
