@@ -30,6 +30,8 @@ messageQueue = MessageQueue.get_instance()
 
 
 async def message_system():
+    if not Utils.can_run():
+        log.info("Cannot run because it's not between start_hour and end_hour")
     db = Database()
     channel = config.telegram_id
     while messageQueue.isLock():

@@ -4,6 +4,7 @@ from typing import Optional
 import math
 import re
 from collections import Counter
+from datetime import datetime
 
 
 class Utils:
@@ -74,3 +75,17 @@ class Utils:
             return 0.0
         else:
             return float(numerator) / denominator
+
+    @staticmethod
+    def can_run() -> bool:
+        config = Config.get_instance()
+        start_hour = config.telegram_start_hour
+        end_hour = config.telegram_end_hour
+        current_hour = datetime.now().hour
+        if not end_hour:
+            return True
+        else:
+            if end_hour > start_hour:
+                return end_hour <= current_hour < 24 and 0 <= current_hour <= start_hour
+            else:
+                return start_hour <= current_hour <= end_hour
