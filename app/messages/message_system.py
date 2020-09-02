@@ -120,10 +120,18 @@ class MessageQueue:
                 map(
                     lambda x: False
                     if x == deal
-                    else Utils.cosine_distance(x.description, deal.description) > 0.85, tmpList
+                    else Utils.cosine_distance(x.description, deal.description) > 0.85,
+                    tmpList,
                 )
             ):
                 tmpList.append(deal)
+            else:
+                log.info("Found two similar products:")
+                log.info(deal)
+                for x in tmpList:
+                    if Utils.cosine_distance(x.description, deal.description) > 0.85:
+                        log.info(x)
+                        break
 
         return tmpList
 
