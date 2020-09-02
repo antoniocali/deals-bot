@@ -15,7 +15,8 @@ setup(
         'fastapi==0.61.0',
         'telethon==1.16.2',
         'APScheduler==3.6.3',
-        'requests==2.24.0'
+        'requests==2.24.0',
+        'selectorlib==0.16.0'
     ]
 )
 
