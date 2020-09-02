@@ -85,7 +85,7 @@ class Utils:
         if not end_hour:
             return True
         else:
-            if end_hour > start_hour:
+            if end_hour < start_hour:
                 return end_hour <= current_hour < 24 and 0 <= current_hour <= start_hour
             else:
                 return start_hour <= current_hour <= end_hour
