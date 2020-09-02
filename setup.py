@@ -16,7 +16,8 @@ setup(
         'telethon==1.16.2',
         'APScheduler==3.6.3',
         'requests==2.24.0',
-        'selectorlib==0.16.0'
+        'selectorlib==0.16.0',
+        'peewee==3.13.3'
     ]
 )
 
