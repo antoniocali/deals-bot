@@ -197,7 +197,7 @@ class MessageQueue:
                         return deal
                     else:
                         log.info(
-                            f"{dbDeal} - Cannot post - Days passed {timedifference.days} from last post",
+                            f"{dbDeal} - Cannot post - {timedifference.days} Days passed from last post",
                         )
                         return None
             else:
