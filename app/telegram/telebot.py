@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from app.db.database import Database
 from telethon import TelegramClient
 import time
+from typing import Optional
 from app.utils import Utils
 from app.config.config import Config
 from app.models import DealsModel, TelegramMessageModel
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers import interval
+from apscheduler.triggers import interval, date as datetrigger
 from apscheduler.events import (
     EVENT_ALL,
     EVENT_JOB_ERROR,
@@ -30,17 +31,51 @@ messageQueue = MessageQueue.get_instance()
 
 
 async def message_system():
-    if not Utils.can_run():
-        log.info("Cannot run because it's not between start_hour and end_hour")
-        next_run = datetime.now() + timedelta(
+    job = scheduler.get_job("telegram")
+    if not job:
+        log.info(
+            "Job not found - I assume last run delete the whole scheduling. Rescheduling."
+        )
+        triggers = interval.IntervalTrigger(
             minutes=Utils.delayBetweenTelegramMessages()
         )
-        log.info(
-            "Next post at {next_run}".format(
-                next_run=next_run.strftime("%Y/%m/%d %H:%M:%S")
-            )
+        scheduler.add_job(
+            message_system,
+            trigger=triggers,
+            max_instances=1,
+            id="telegram",
+            next_run_time=datetime.now(),
         )
+    if not Utils.can_run():
+        log.info("Cannot run because it's not between start_hour and end_hour")
+        startHour = config.telegram_start_hour
+        endHour = config.telegram_end_hour
+        today = datetime.today()
+        if startHour and startHour < endHour:
+            scheduledTime = datetime(
+                year=today.year,
+                month=today.month,
+                day=today.day,
+                hour=startHour,
+                minute=0,
+                second=0,
+            ) + timedelta(days=1)
+            dateTrigger = datetrigger.DateTrigger(scheduledTime)
+            job.reschedule(dateTrigger)
+        elif endHour and endHour < startHour:
+            scheduledTime = datetime(
+                year=today.year,
+                month=today.month,
+                day=today.day,
+                hour=endHour,
+                minute=0,
+                second=0,
+            )
+            dateTrigger = datetrigger.DateTrigger(scheduledTime)
+            job.reschedule(dateTrigger)
+        log.info(f"Rescheduling the job to {job.next_run_time}")
         return
+
     db = Database()
     channel = config.telegram_id
     while messageQueue.isLock():

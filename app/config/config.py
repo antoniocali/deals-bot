@@ -75,7 +75,7 @@ class Config:
                 ):
                     raise ValueError("start_hour_of_day must be between 0 and 23")
 
-                self.telegram_start_hour = (
+                self.telegram_start_hour: Optional[int] = (
                     telegram["start_hour_of_day"]
                     if telegram["start_hour_of_day"]
                     else None
@@ -97,7 +97,7 @@ class Config:
                             "end_hour_of_day mutual exclusive with delay_message_minutes"
                         )
 
-                self.telegram_end_hour = (
+                self.telegram_end_hour: Optional[int] = (
                     telegram["end_hour_of_day"] if telegram["end_hour_of_day"] else None
                 )
 
