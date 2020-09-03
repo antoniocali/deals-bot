@@ -43,6 +43,7 @@ class MessageQueue:
                 id="queue_system",
                 next_run_time=datetime.now(),
             )
+            self.first_run = True
             self._scheduler.start()
 
     def _listener(self, event):
@@ -60,7 +61,7 @@ class MessageQueue:
             )
 
     def isLock(self) -> bool:
-        return self._lock
+        return self._lock or self.first_run
 
     def nextElem(self) -> Optional[DealsModel]:
         if self._lock:
@@ -74,6 +75,9 @@ class MessageQueue:
             log.info("Refreshing Data")
             self._queue = self._get_deals_for_run()
             log.info("Data Refreshed")
+            if self.first_run:
+                log.info("First Run Done!")
+                self.first_run = False
             self._lock = False
         else:
             log.warning("Still refreshing data from previous run")

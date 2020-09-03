@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from urllib import parse
 from app.models import DealsModel
-import sys
 from typing import List
 import requests
 import re
@@ -9,6 +8,7 @@ import json
 import selectorlib
 from slugify import slugify
 from app.utils import Utils
+import cfscrape
 
 
 class Fetcher(ABC):
@@ -67,12 +67,13 @@ class FetcherAmazon(Fetcher):
 class FetcherCamel(Fetcher):
     def __init__(self, headers: dict) -> None:
         self.headers = headers
+        self.scraper = cfscrape.create_scraper()
 
     def fetch_data(self, params: dict = None) -> List[DealsModel]:
         pageQuery = params["page"]
         discountQuery = params["min_discount"]
         maxPrice = params["max_price"]
-        r = requests.get(
+        r = self.scraper.get(
             f"https://it.camelcamelcamel.com/top_drops?p={pageQuery}",
             headers=self.headers,
         )

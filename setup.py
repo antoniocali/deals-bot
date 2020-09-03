@@ -17,7 +17,8 @@ setup(
         'APScheduler==3.6.3',
         'requests==2.24.0',
         'selectorlib==0.16.0',
-        'peewee==3.13.3'
+        'peewee==3.13.3',
+        'cfscrape==2.1.1'
     ]
 )
 

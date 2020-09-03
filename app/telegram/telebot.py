@@ -96,10 +96,10 @@ async def message_system():
     else:
         # Send message to admin
         log.info(
-            "I couldn't retrieve any new valid deals. I will sleep for a hour before trying again"
+            "I couldn't retrieve any new valid deals. I will sleep for five minutes before trying again"
         )
         scheduler.pause_job("telegram")
-        time.sleep(60 * 60)
+        time.sleep(5 * 60)
         log.info("Resuming Job and see if new deals appeared.")
         scheduler.resume_job("telegram")
 
