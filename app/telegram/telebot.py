@@ -2,6 +2,7 @@ from app.logger import getLogger
 from datetime import datetime, timedelta
 from app.db.database import Database
 from telethon import TelegramClient
+from telethon.tl.tlobject import TLObject
 import time
 from typing import Optional
 from app.utils import Utils
@@ -77,13 +78,18 @@ async def message_system():
         return
 
     db = Database()
-    channel = config.telegram_id
+    channel_type = config.telegram_type_id
+    channel_id = config.telegram_id
     while messageQueue.isLock():
         time.sleep(10)
     valid_deal = messageQueue.nextElem()
     if valid_deal:
         await send_message(
-            deal=valid_deal, database=db, channel=channel, save_on_db=True
+            deal=valid_deal,
+            database=db,
+            channel_type=channel_type,
+            channel_id=channel_id,
+            save_on_db=True,
         )
         next_run = datetime.now() + timedelta(
             minutes=Utils.delayBetweenTelegramMessages()
@@ -134,7 +140,11 @@ def message(
 
 
 async def send_message(
-    deal: DealsModel, database: Database, channel: int, save_on_db: bool = True
+    deal: DealsModel,
+    database: Database,
+    channel_type: TLObject,
+    channel_id: int,
+    save_on_db: bool = True,
 ):
     path = image_util.create_image(
         originalPrice=deal.originalPrice,
@@ -145,7 +155,7 @@ async def send_message(
     if save_on_db:
         database.upsertDeal(deal)
     msg = await bot.send_file(
-        channel,
+        channel_type,
         file=path,
         caption=message(
             deal.originalPrice,
@@ -158,7 +168,7 @@ async def send_message(
     )
     if save_on_db:
         database.upsertTelegramMessage(
-            TelegramMessageModel(id=msg.id, channel_id=channel, datetime=msg.date),
+            TelegramMessageModel(id=msg.id, channel_id=channel_id, datetime=msg.date),
             deal.impressionAsin,
         )
     image_util.delete_tmp_image(path)
