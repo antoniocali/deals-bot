@@ -8,6 +8,7 @@ scheduler = BackgroundScheduler()
 
 def tick():
     print("tick")
+    job.reschedule(date.DateTrigger(datetime.now() + timedelta(seconds=2)))
 
 
 trigger = interval.IntervalTrigger(seconds=10)
@@ -18,5 +19,5 @@ while 1:
     job = scheduler.get_job("tick")
     print(job)
     print(job.trigger)
-    job.reschedule(date.DateTrigger(datetime.now() + timedelta(seconds=2)))
+    print(job.next_run_time)
     time.sleep(5)

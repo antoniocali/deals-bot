@@ -32,7 +32,7 @@ messageQueue = MessageQueue.get_instance()
 
 async def message_system():
     job = scheduler.get_job("telegram")
-    if not job:
+    if not job or not job.trigger:
         log.info(
             "Job not found - I assume last run delete the whole scheduling. Rescheduling."
         )
