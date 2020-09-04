@@ -116,7 +116,7 @@ class MessageQueue:
                 moreToFetch = False
                 break
             page += 1
-        return deals
+        return deals[:postPerDay]
 
     def _remove_similar_products(self, deals: List[DealsModel]) -> List[DealsModel]:
         tmpList: List[DealsModel] = list()
