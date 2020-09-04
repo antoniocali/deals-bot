@@ -1,4 +1,3 @@
-from app.generators.image_util import create_image
 from app.generators import image_util
 
 image_util.create_image(

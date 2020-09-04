@@ -19,45 +19,50 @@ def create_image(
     imageUrl: str,
     save_as: str,
     currency: str = "€",
-    to_test: bool = False
+    to_test: bool = False,
 ) -> str:
     with Image.open(config.image_template_uri) as im:
         tmpPathUri = path.abspath(tmpPath)
         height = im.size[1]
         width = im.size[0]
         # Text for DealPrice
-        dealPriceFont = ImageFont.truetype(config.font_uri, 60)
-        dealPriceBorderFont = ImageFont.truetype(config.font_uri, 62)
         txtDeal = Image.new("RGBA", im.size, (255, 255, 255, 0))
         d = ImageDraw.Draw(txtDeal)
-        # write text
-        d.text(
-            (width * 0.2, height / 2 + 10),
-            ("%.2f" % dealPrice) + currency,
-            font=dealPriceBorderFont,
-            fill=(0, 0, 0, 255),
-        )
+
+        # Check if I have to put border
+        if config.font_color_border:
+            dealPriceBorderFont = ImageFont.truetype(
+                config.font_uri, config.font_size + 2
+            )
+            d.text(
+                (width * 0.2, height / 2 + 10),
+                ("%.2f" % dealPrice) + currency,
+                font=dealPriceBorderFont,
+                fill=(0, 0, 0, 255),
+            )
+
+        dealPriceFont = ImageFont.truetype(config.font_uri, config.font_size)
         d.text(
             (width * 0.2, height / 2 + 8),
             ("%.2f" % dealPrice) + currency,
             font=dealPriceFont,
-            fill=(237, 54, 196, 255),
+            fill=config.font_color,
         )
 
         # Text for OriginalPrice
-        originalPriceFont = ImageFont.truetype(config.font_uri, 26)
         txtOriginal = Image.new("RGBA", im.size, (255, 255, 255, 0))
         dOriginal = ImageDraw.Draw(txtOriginal)
         # write text
 
+        originalPriceFont = ImageFont.truetype(config.font_uri, int(config.font_size / 2))
         dOriginal.text(
             (width * 0.2, height / 2 - 20),
             ("%.2f" % originalPrice) + currency,
             font=originalPriceFont,
-            fill=(237, 54, 196, 255),
+            fill=config.font_color,
         )
         dOriginal.line(
-            (width * 0.2 - 5, height / 2 - 5, width * 0.2 + 60, height / 2 - 5),
+            (width * 0.2 - 5, height / 2 - 5, width * 0.2 + 75, height / 2 - 5),
             fill="black",
             width=4,
         )

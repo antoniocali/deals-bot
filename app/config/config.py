@@ -1,7 +1,7 @@
 from __future__ import annotations
 import yaml
 from app.logger import getLogger
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 from telethon import TelegramClient
 from telethon.errors import BotInvalidError
 from telethon.tl.types import InputPeerUser, InputPeerChannel
@@ -29,6 +29,9 @@ templated = set(
         "deals_max_price",
         "image_template_uri",
         "font_uri",
+        "font_color",
+        "font_color_border",
+        "font_size",
     ]
 )
 
@@ -43,7 +46,7 @@ class Config:
             Config.__instance__ = self
             path = "./app/config/config.yaml"
             log.info(f"Reading configuration from: {path}")
-            with open(path, "r", encoding='utf8') as stream:
+            with open(path, "r", encoding="utf8") as stream:
                 config = yaml.safe_load(stream)
                 # API
                 self.api_id = config["api_id"]
@@ -121,6 +124,17 @@ class Config:
                 self.font_uri = image["font_uri"]
                 if not self.font_uri:
                     raise ValueError("font_uri must be set")
+                convertRgb: Callable[[str], int] = lambda x: int(x.strip())
+                r, g, b = list(map(convertRgb, image["font_color"].split(",")))
+
+                self.font_color: Tuple[int, int, int] = (r, g, b)
+                self.font_size: int = image["font_size"]
+                colorBorder = image["font_color_border"]
+                if colorBorder:
+                    r, g, b = list(map(convertRgb, colorBorder.split(",")))
+                    self.font_color_border: Optional[Tuple[int, int, int]] = (r, g, b)
+                else:
+                    self.font_color_border = None
 
                 bot = (
                     TelegramClient("config", self.api_id, self.api_hash)

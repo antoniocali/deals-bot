@@ -36,3 +36,8 @@ telegram:
 image_generator:
   image_template_uri: 
   font_uri: 
+  # RGB like 255,255,255
+  font_color:
+  font_size: 
+  # RGB like 0,0,0 => Can be blank, it means no border
+  font_color_border: "0,0,0"
