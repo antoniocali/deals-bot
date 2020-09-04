@@ -9,3 +9,5 @@ dump.rdb
 config.yaml
 database
 *.session-journal
+*.otf
+*.ttf
