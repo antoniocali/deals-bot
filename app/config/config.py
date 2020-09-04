@@ -43,7 +43,7 @@ class Config:
             Config.__instance__ = self
             path = "./app/config/config.yaml"
             log.info(f"Reading configuration from: {path}")
-            with open(path, "r") as stream:
+            with open(path, "r", encoding='utf8') as stream:
                 config = yaml.safe_load(stream)
                 # API
                 self.api_id = config["api_id"]
@@ -104,6 +104,7 @@ class Config:
                 )
 
                 self.telegram_delay_message_minutes = telegram["delay_message_minutes"]
+                self.telegram_message_template = telegram["message_template"]
 
                 if (
                     not self.telegram_end_hour
@@ -136,7 +137,9 @@ class Config:
         else:
             raise Exception("You cannot create another Config class")
 
-    async def _get_channel_id(self, bot: TelegramClient, channel_id: str) -> Tuple[int, TLObject]:
+    async def _get_channel_id(
+        self, bot: TelegramClient, channel_id: str
+    ) -> Tuple[int, TLObject]:
         log.info(f"Retrieving ID for {channel_id}")
         channel = await bot.get_input_entity(channel_id)
         if channel:

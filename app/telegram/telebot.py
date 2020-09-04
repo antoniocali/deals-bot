@@ -4,7 +4,6 @@ from app.db.database import Database
 from telethon import TelegramClient
 from telethon.tl.tlobject import TLObject
 import time
-from typing import Optional
 from app.utils import Utils
 from app.config.config import Config
 from app.models import DealsModel, TelegramMessageModel
@@ -106,35 +105,6 @@ async def message_system():
         )
 
 
-def message(
-    originalPrice: float, dealPrice: float, discount: int, asin: str, description: str
-) -> str:
-    affialiateLink = Utils.amazonAffiliateLink(asin)
-    shortUrlAds = config.short_use_ads
-    shortUrl = (
-        Utils.shortenUrlAds(affialiateLink)
-        if shortUrlAds
-        else Utils.shortenUrlFree(affialiateLink)
-    )
-    # In case short Url doesn't work I use long url
-    shortUrl = shortUrl if shortUrl else affialiateLink
-    return """
-    ⚡ {description}
-    💸💸💸 **Incredibile Offerta** 💸💸💸
-    👎 Prezzo Originale: {originalPrice}€
-    💰 Prezzo Scontato: {dealPrice}€
-    Con **Sconto** del **{discount}%** 🤑🤑
-
-    __URL Offerta__: {shortUrl}
-    """.format(
-        originalPrice="%.2f" % originalPrice,
-        dealPrice="%.2f" % dealPrice,
-        discount=discount,
-        shortUrl=shortUrl,
-        description=description,
-    )
-
-
 async def send_message(
     deal: DealsModel,
     database: Database,
@@ -153,7 +123,7 @@ async def send_message(
     msg = await bot.send_file(
         channel_type,
         file=path,
-        caption=message(
+        caption=Utils.message(
             deal.originalPrice,
             deal.dealPrice,
             deal.percentOff,

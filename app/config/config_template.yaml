@@ -25,6 +25,14 @@ telegram:
   # If end_hour_of_day is provided -> It automatically calculate the delays between messages using posts_per_day
   # otherwise it will post every delay_message_minutes
   delay_message_minutes: 
+  # Leave the | at start and be careful with indentation,
+  message_template: |
+        ⚡ You can use emoji
+        And you can use the followings tags in your message: {description}, {originalPrice}, {dealPrice}, {discount}, {url}
+        those will be automatically replaced.
+        You can also use **BOLD**, or __Italic__ for formatting the text.
+        leave an extra white line after the end of the message template
+   
 image_generator:
   image_template_uri: 
   font_uri: 

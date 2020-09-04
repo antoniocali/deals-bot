@@ -89,3 +89,30 @@ class Utils:
                 return end_hour <= current_hour < 24 and 0 <= current_hour <= start_hour
             else:
                 return start_hour <= current_hour <= end_hour
+
+    @staticmethod
+    def message(
+        originalPrice: float,
+        dealPrice: float,
+        discount: int,
+        asin: str,
+        description: str,
+    ) -> str:
+        config = Config.get_instance()
+        message_template = config.telegram_message_template
+        affialiateLink = Utils.amazonAffiliateLink(asin)
+        shortUrlAds = config.short_use_ads
+        shortUrl = (
+            Utils.shortenUrlAds(affialiateLink)
+            if shortUrlAds
+            else Utils.shortenUrlFree(affialiateLink)
+        )
+        # In case short Url doesn't work I use long url
+        shortUrl = shortUrl if shortUrl else affialiateLink
+        return message_template.format(
+            originalPrice="%.2f" % originalPrice,
+            dealPrice="%.2f" % dealPrice,
+            discount=discount,
+            url=shortUrl,
+            description=description,
+        )
