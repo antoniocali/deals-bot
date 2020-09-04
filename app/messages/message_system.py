@@ -75,6 +75,7 @@ class MessageQueue:
             log.info("Refreshing Data")
             self._queue = self._get_deals_for_run()
             log.info("Data Refreshed")
+            log.info(f"I've found {len(self._queue) if self._queue else 0} deals in this run.")
             if self.first_run:
                 log.info("First Run Done!")
                 self.first_run = False
