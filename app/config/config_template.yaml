@@ -40,4 +40,4 @@ image_generator:
   font_color:
   font_size: 
   # RGB like 0,0,0 => Can be blank, it means no border
-  font_color_border: "0,0,0"
+  font_color_border:
