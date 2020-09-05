@@ -27,6 +27,12 @@ class Website(IntEnum):
     AMAZON = 1
 
 
+class ShortenProvider(IntEnum):
+    FREE = 0
+    BITLY = 1
+    SHORTEST = 2
+
+
 @dataclass
 class TelegramMessageModel:
     id: int

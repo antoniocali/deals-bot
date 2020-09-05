@@ -6,6 +6,7 @@ from telethon import TelegramClient
 from telethon.errors import BotInvalidError
 from telethon.tl.types import InputPeerUser, InputPeerChannel
 from telethon.tl.tlobject import TLObject
+from app.models import ShortenProvider
 
 log = getLogger("CONFIG")
 
@@ -14,8 +15,9 @@ templated = set(
         "api_id",
         "api_hash",
         "bot_token",
-        "short_use_ads",
-        "shortest_token",
+        "shorten_provider",
+        "shorten_bitly_token",
+        "shorten_shortest_token",
         "amazon_affiliate",
         "telegram_channel_id",
         "telegram_repost_after_days",
@@ -34,6 +36,12 @@ templated = set(
         "font_size",
     ]
 )
+
+providers: dict[str, Tuple[str, ShortenProvider]] = {
+    "bitly": ("shorten_bitly_token", ShortenProvider.BITLY),
+    "shortest": ("shorten_shortest_token", ShortenProvider.SHORTEST),
+    "free": ("", ShortenProvider.FREE),
+}
 
 
 class Config:
@@ -54,12 +62,24 @@ class Config:
                 self.bot_token = config["bot_token"]
                 # Shorten
                 shorten_url = config["shorten_url"]
-                self.short_use_ads = shorten_url.get("use_ads", False)
-                if self.short_use_ads and not shorten_url.get("shortest_token"):
+
+                shorten_provider = shorten_url["shorten_provider"]
+                self.shorten_shortest_token = shorten_url["shortest_token"]
+                self.shorten_bitly_token = shorten_url["bitly_token"]
+                if shorten_provider not in providers.keys():
                     raise ValueError(
-                        "Shortest Token must be set if use_ads is set to True"
+                        f"You chose an {shorten_provider} Provider, available chooses: {str(providers.keys())}"
                     )
-                self.shortest_token = shorten_url["shortest_token"]
+                else:
+                    if (
+                        not getattr(self, providers[shorten_provider][0])
+                        and providers[shorten_provider][0]
+                    ):
+                        raise ValueError(
+                            f"You specified {shorten_provider} as provider, but you didn't provide the token for it."
+                        )
+                self.shorten_provider = providers[shorten_provider][1]
+
                 # Amazon
                 self.amazon_affiliate = config["amazon_affiliate"]
                 # Deals
@@ -184,3 +204,6 @@ class Config:
             log.info("Configuration Finished")
             return obj
         return Config.__instance__
+
+
+c = Config.get_instance()

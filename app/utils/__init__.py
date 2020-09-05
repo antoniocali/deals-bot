@@ -1,10 +1,11 @@
 import requests
 from app.config.config import Config
-from typing import Optional
+from typing import Callable, Optional
 import math
 import re
 from collections import Counter
 from datetime import datetime
+from app.models import ShortenProvider
 
 
 class Utils:
@@ -13,10 +14,33 @@ class Utils:
         return textInput.replace(".", "").replace(",", ".").replace("€", "")
 
     @staticmethod
-    def shortenUrlAds(url: str) -> Optional[str]:
+    def shortUrl(url: str, provider: ShortenProvider):
+        short_url: dict[ShortenProvider, Callable[[str], Optional[str]]] = {
+            ShortenProvider.FREE: Utils._shortFree,
+            ShortenProvider.SHORTEST: Utils._shortShortest,
+            ShortenProvider.BITLY: Utils._shortBitly,
+        }
+        return short_url[provider](url)
+
+    @staticmethod
+    def _shortBitly(url: str) -> Optional[str]:
+        config = Config.get_instance()
+        provider = "https://api-ssl.bitly.com/v4/shorten"
+        token = config.shorten_bitly_token
+        headers = {"Authorization": f"Bearer {token}"}
+        data = {"long_url": url}
+        response = requests.post(provider, json=data, headers=headers)
+        if response.ok:
+            responseData = response.json()
+            return responseData["link"]
+        else:
+            return None
+
+    @staticmethod
+    def _shortShortest(url: str) -> Optional[str]:
         config = Config.get_instance()
         provider = "https://api.shorte.st/v1/data/url"
-        token = config.shortest_token
+        token = config.shorten_shortest_token
         headers = {"public-api-token": token}
         data = {"urlToShorten": url}
         response = requests.put(provider, data=data, headers=headers)
@@ -30,7 +54,7 @@ class Utils:
             return None
 
     @staticmethod
-    def shortenUrlFree(url: str) -> Optional[str]:
+    def _shortFree(url: str) -> Optional[str]:
         provider = "https://goolnk.com/api/v1/shorten"
         data = {"url": url}
         response = requests.post(provider, data=data)
@@ -101,12 +125,8 @@ class Utils:
         config = Config.get_instance()
         message_template = config.telegram_message_template
         affialiateLink = Utils.amazonAffiliateLink(asin)
-        shortUrlAds = config.short_use_ads
-        shortUrl = (
-            Utils.shortenUrlAds(affialiateLink)
-            if shortUrlAds
-            else Utils.shortenUrlFree(affialiateLink)
-        )
+        shortUrlProvider = config.shorten_provider
+        shortUrl = Utils.shortUrl(url=affialiateLink, provider=shortUrlProvider)
         # In case short Url doesn't work I use long url
         shortUrl = shortUrl if shortUrl else affialiateLink
         return message_template.format(
