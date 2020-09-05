@@ -71,9 +71,8 @@ class Config:
                         f"You chose an {shorten_provider} Provider, available chooses: {str(providers.keys())}"
                     )
                 else:
-                    if (
-                        not getattr(self, providers[shorten_provider][0])
-                        and providers[shorten_provider][0]
+                    if providers[shorten_provider][0] and not getattr(
+                        self, providers[shorten_provider][0]
                     ):
                         raise ValueError(
                             f"You specified {shorten_provider} as provider, but you didn't provide the token for it."
