@@ -4,11 +4,12 @@ api_hash:
 bot_token: 
 shorten_url:
 # if true use short.est that let you earn money on links, if false => goolnk
-  use_ads: 
 # Short.est Token
   shortest_token: 
 # BitLy Token:
-  bitly_token:
+  bitly_token: 
+# provider, choose between: [free, shortest, bitly]
+  shorten_provider: 
 # amazon
 amazon_affiliate: 
 deals:
