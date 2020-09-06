@@ -192,7 +192,6 @@ class Config:
         if not Config.__instance__:
             obj = Config()
             log.info("Configuration Found")
-            print(dir(obj))
             log.info("{:<35}{:<40}".format("--KEY--", "--VALUE--"))
             for key in sorted(list(templated)):
                 log.info(
@@ -203,6 +202,3 @@ class Config:
             log.info("Configuration Finished")
             return obj
         return Config.__instance__
-
-
-c = Config.get_instance()
