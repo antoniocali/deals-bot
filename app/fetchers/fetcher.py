@@ -1,6 +1,6 @@
 from typing import List, Optional
 from app.models import DealsModel, Website
-from app.fetchers.models.fetching import FetcherAmazon, FetcherCamel
+from app.fetchers.models.fetching import FetcherAmazon, FetcherCamel, FetcherInstantGaming
 
 
 headers = {
@@ -21,6 +21,7 @@ headers = {
 websites = {
     Website.CAMEL: FetcherCamel(headers=headers),
     Website.AMAZON: FetcherAmazon(headers=headers),
+    Website.INSTANT_GAMING: FetcherInstantGaming(headers=headers)
 }
 
 

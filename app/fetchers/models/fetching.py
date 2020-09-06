@@ -9,7 +9,6 @@ import selectorlib
 from slugify import slugify
 from app.utils import Utils
 import cfscrape
-import math
 
 
 class Fetcher(ABC):

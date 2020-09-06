@@ -26,6 +26,11 @@ def get_deals_camel(
     )
 
 
+@app.get("/instant")
+def get_deals_instant() -> List[DealsModel]:
+    return fetch_data(Website.INSTANT_GAMING, {})
+
+
 def discountRangeQueryParam(discountRange: DiscountRange) -> str:
     switcher = {0: "10-25%", 1: "25-50%", 2: "50-70%", 3: "70-"}
     return f"discountRanges:{switcher[discountRange]}"

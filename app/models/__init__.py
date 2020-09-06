@@ -25,6 +25,7 @@ class DiscountRange(IntEnum):
 class Website(IntEnum):
     CAMEL = 0
     AMAZON = 1
+    INSTANT_GAMING = 2
 
 
 class ShortenProvider(IntEnum):
