@@ -13,7 +13,7 @@ class Utils:
     def removeSpecialFromPrice(textInput: str) -> str:
         textInput = textInput.replace("€", "").replace("%", "")
         if "," in textInput:
-            textInput.replace(".", "").replace(",", ".")
+            textInput = textInput.replace(".", "").replace(",", ".")
         return textInput
 
     @staticmethod
