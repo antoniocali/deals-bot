@@ -11,7 +11,10 @@ from app.models import ShortenProvider
 class Utils:
     @staticmethod
     def removeSpecialFromPrice(textInput: str) -> str:
-        return textInput.replace(".", "").replace(",", ".").replace("€", "")
+        textInput = textInput.replace("€", "").replace("%", "")
+        if "," in textInput:
+            textInput.replace(".", "").replace(",", ".")
+        return textInput
 
     @staticmethod
     def shortUrl(url: str, provider: ShortenProvider):

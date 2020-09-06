@@ -8,8 +8,3 @@ html:
     xpath: '//div[contains(concat(" ",normalize-space(@class)," ")," item ")]//a[contains(concat(" ",normalize-space(@class)," ")," cover ")]'
     multiple: true
     type: HTML
-link:
-    css: 'div.item a.cover'
-    xpath: '//div[contains(concat(" ",normalize-space(@class)," ")," productsPreorder ")]//a[contains(concat(" ",normalize-space(@class)," ")," button ")]'
-    multiple: true
-    type: Link

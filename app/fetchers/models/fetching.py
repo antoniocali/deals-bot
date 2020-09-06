@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from urllib import parse
+from bs4 import BeautifulSoup
 from app.models import DealsModel
 from typing import List
 import requests
@@ -9,6 +9,7 @@ import selectorlib
 from slugify import slugify
 from app.utils import Utils
 import cfscrape
+import math
 
 
 class Fetcher(ABC):
@@ -158,13 +159,58 @@ class FetcherCamel(Fetcher):
         return retList
 
 
-class InstantGamingFetcher(Fetcher):
+class FetcherInstantGaming(Fetcher):
     def __init__(self, headers: dict):
         self.headers = headers
 
     def fetch_data(self, params: dict) -> List[DealsModel]:
         url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
         r = requests.get(url, headers=self.headers,)
-        return []
+        if not r.ok:
+            return []
 
+        selector = selectorlib.Extractor.from_yaml_file(
+            "./app/fetchers/selectors/instant_gaming_selector.yaml"
+        )
+        extracted = selector.extract(r.text)
+        importantData = zip(extracted["description"], extracted["html"])
+        data: List[DealsModel] = list()
+        regex = r"it\/([0-9]+)-"
+        for elem in importantData:
+            description = elem[0]
+            html = elem[1]
+            soup = BeautifulSoup(html, "html.parser")
+            link = soup.a["href"]
+            imageUrl = soup.img["src"]
+            matcher = re.search(regex, link)
+            if not matcher:
+                continue
+            dealPrice = round(
+                float(
+                    Utils.removeSpecialFromPrice(
+                        soup.find("div", {"class": "price"}).string.strip()
+                    )
+                ),
+                2,
+            )
+            discount = abs(
+                int(
+                    Utils.removeSpecialFromPrice(
+                        soup.find("div", {"class": "discount"}).string.strip()
+                    )
+                )
+            )
+            originalPrice = round(dealPrice + (dealPrice * discount) / 100, 2)
+            data.append(
+                DealsModel(
+                    dealPrice=dealPrice,
+                    originalPrice=originalPrice,
+                    percentOff=discount,
+                    description=description,
+                    imageUrl=imageUrl,
+                    impressionAsin=matcher.group(1),
+                    slug=slugify(description),
+                )
+            )
+        return data
 
