@@ -59,7 +59,9 @@ async def message_system():
                 hour=startHour,
                 minute=0,
                 second=0,
-            ) + timedelta(days=1)
+            )
+            if today.hour > startHour:
+                scheduledTime = scheduledTime + timedelta(days=1)
             dateTrigger = datetrigger.DateTrigger(scheduledTime)
             job.reschedule(dateTrigger)
         elif endHour and endHour < startHour:
