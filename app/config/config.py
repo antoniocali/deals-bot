@@ -215,6 +215,3 @@ class Config:
             log.info("Configuration Finished")
             return obj
         return Config.__instance__
-
-
-c = Config.get_instance()
