@@ -14,7 +14,24 @@ shorten_url:
 amazon_affiliate: 
 deals:
   min_discount: 
-  max_price: 
+  max_price:
+  filter_categories: true
+  categories:
+    other: false
+    auto: false
+    home: false
+    # Smartphones, Headphones, Covers, TVs..
+    electronics: false
+    computer: false
+    film: false
+    toys: false
+    lighting: false
+    books: false
+    music: false
+    watches: false
+    shoes: false
+    sport: false
+    videogames: false
 # telegram 
 telegram:
   channel_id: 
