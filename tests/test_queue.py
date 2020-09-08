@@ -9,4 +9,3 @@ while 1:
     else:
         print(c.nextElem())
         sleep(1)
-
