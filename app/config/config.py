@@ -171,7 +171,6 @@ class Config:
                 bot = (
                     TelegramClient("config", self.api_id, self.api_hash)
                     .start(bot_token=self.bot_token)
-                    .start()
                 )
                 with bot:
                     telegram_type: Tuple[int, TLObject] = bot.loop.run_until_complete(

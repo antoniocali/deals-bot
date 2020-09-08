@@ -1,8 +1,9 @@
 from __future__ import annotations
+from time import sleep
 from app.utils import Utils
 from typing import Optional, List, Callable
 from app.logger import getLogger
-from app.models import DealsModel
+from app.models import AmazonDealsCategories, DealsModel
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.events import (
@@ -44,6 +45,7 @@ class MessageQueue:
                 next_run_time=datetime.now(),
             )
             self.first_run = True
+            self.config = Config.get_instance()
             self._scheduler.start()
 
     def _listener(self, event):
@@ -75,7 +77,9 @@ class MessageQueue:
             log.info("Refreshing Data")
             self._queue = self._get_deals_for_run()
             log.info("Data Refreshed")
-            log.info(f"I've found {len(self._queue) if self._queue else 0} deals in this run.")
+            log.info(
+                f"I've found {len(self._queue) if self._queue else 0} deals in this run."
+            )
             if self.first_run:
                 log.info("First Run Done!")
                 self.first_run = False
@@ -85,17 +89,21 @@ class MessageQueue:
 
     def _get_deals_for_run(self) -> Optional[List[DealsModel]]:
         database = Database()
-        config = Config.get_instance()
+        config = self.config
         channel_id = config.telegram_id
         page = 1
         moreToFetch = True
         postPerDay = config.telegram_posts_per_day
         min_discount = config.deals_min_discount
         max_price = config.deals_max_price
+        categories = config.deals_categories if config.deals_filter_categories else None
         deals = list()
         while moreToFetch:
             data = self._fetch_more(
-                page=page, min_discount=min_discount, max_price=max_price
+                page=page,
+                min_discount=min_discount,
+                max_price=max_price,
+                categories=categories,
             )
             if not data:
                 log.info("No More Data to Fetch")
@@ -145,6 +153,7 @@ class MessageQueue:
         page: int,
         min_discount: Optional[int] = None,
         max_price: Optional[int] = None,
+        categories: Optional[List[AmazonDealsCategories]] = None,
     ) -> Optional[List[dict]]:
         """ Fetch as much deals as I can from Camel
         """
@@ -154,6 +163,10 @@ class MessageQueue:
             queryParams += f"&min_discount={min_discount}"
         if max_price:
             queryParams += f"&max_price={max_price}"
+        if categories:
+            queryParams += (
+                f"&category={'&category='.join(map(lambda x: x.value, categories))}"
+            )
         req = requests.get(url + f"camel{queryParams}")
         if req.ok:
             response = req.json()

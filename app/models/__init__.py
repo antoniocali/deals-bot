@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from enum import Enum, IntEnum
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional
 
 
 class DealsModel(BaseModel):
@@ -13,6 +13,7 @@ class DealsModel(BaseModel):
     dealPrice: float
     percentOff: int
     slug: str
+    category: Optional[str] = None
     reviewRating: float = -1
 
 

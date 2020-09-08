@@ -1,6 +1,6 @@
-from app.models import DealsModel, DiscountRange, Website
+from app.models import DealsModel, DiscountRange, Website, AmazonDealsCategories
 from typing import List, Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from app.fetchers.fetcher import fetch_data
 
 app = FastAPI()
@@ -19,10 +19,16 @@ def get_deals_camel(
     page: Optional[int] = 1,
     min_discount: Optional[int] = None,
     max_price: Optional[int] = None,
+    category: Optional[List[AmazonDealsCategories]] = Query(None),
 ) -> List[DealsModel]:
     return fetch_data(
         Website.CAMEL,
-        {"page": page, "min_discount": min_discount, "max_price": max_price},
+        {
+            "page": page,
+            "min_discount": min_discount,
+            "max_price": max_price,
+            "categories": category,
+        },
     )
 
 

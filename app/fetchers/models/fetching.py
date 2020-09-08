@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from app.models import DealsModel
-from typing import List
+from app.models import AmazonDealsCategories, DealsModel
+from typing import List, Optional
+from functools import reduce
 import requests
 import re
 import json
@@ -9,6 +10,7 @@ import selectorlib
 from slugify import slugify
 from app.utils import Utils
 import cfscrape
+from time import sleep
 
 
 class Fetcher(ABC):
@@ -70,13 +72,45 @@ class FetcherCamel(Fetcher):
         self.scraper = cfscrape.create_scraper()
 
     def fetch_data(self, params: dict = None) -> List[DealsModel]:
-        pageQuery = params["page"]
-        discountQuery = params["min_discount"]
-        maxPrice = params["max_price"]
-        r = self.scraper.get(
-            f"https://it.camelcamelcamel.com/top_drops?p={pageQuery}",
-            headers=self.headers,
-        )
+        pageQuery: int = params["page"]
+        minDiscount: int = params.get("min_discount", None)
+        maxPrice: int = params.get("max_price", None)
+        categories: List[AmazonDealsCategories] = params.get("categories", None)
+
+        def flat_list(x: List[DealsModel], y: List[DealsModel]) -> List[DealsModel]:
+            x.extend(y)
+            return x
+
+        if categories:
+            tmpList: List[List[DealsModel]] = list()
+            for category in categories:
+                tmpList.append(
+                    self._get_data(
+                        pageQuery=pageQuery,
+                        maxPrice=maxPrice,
+                        minDiscount=minDiscount,
+                        category=category.value,
+                    )
+                )
+                sleep(1 / 2)
+            return reduce(flat_list, tmpList)
+        else:
+            return self._get_data(
+                pageQuery=pageQuery, maxPrice=maxPrice, minDiscount=minDiscount
+            )
+
+    def _get_data(
+        self,
+        pageQuery: int,
+        maxPrice: Optional[int] = None,
+        minDiscount: Optional[int] = None,
+        category: Optional[str] = None,
+    ) -> List[DealsModel]:
+        url = "https://it.camelcamelcamel.com/top_drops"
+        url += f"?p={pageQuery}"
+        if category:
+            url += f"&bn={category}"
+        r = self.scraper.get(url, headers=self.headers,)
         selector = selectorlib.Extractor.from_yaml_file(
             "./app/fetchers/selectors/camel_selector.yaml"
         )
@@ -121,7 +155,7 @@ class FetcherCamel(Fetcher):
                 (discountPrice / (discountPrice + discountAmount)) * 100
             )
             # Check if discount is lower than what we want
-            if discountQuery and discount < discountQuery:
+            if minDiscount and discount < minDiscount:
                 # In case it skips the element
                 continue
 
@@ -151,6 +185,7 @@ class FetcherCamel(Fetcher):
                     imageUrl=item[4],
                     impressionAsin=item[5],
                     slug=slugify(item[6]),
+                    category=category,
                 ),
                 dataAsinAndOriginalPrice,
             )
