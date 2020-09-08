@@ -1,12 +1,12 @@
 from __future__ import annotations
 import yaml
 from app.logger import getLogger
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, List
 from telethon import TelegramClient
 from telethon.errors import BotInvalidError
 from telethon.tl.types import InputPeerUser, InputPeerChannel
 from telethon.tl.tlobject import TLObject
-from app.models import ShortenProvider
+from app.models import AmazonDealsCategories, ShortenProvider, mappingsCategories
 
 log = getLogger("CONFIG")
 
@@ -29,6 +29,8 @@ templated = set(
         "telegram_delay_message_minutes",
         "deals_min_discount",
         "deals_max_price",
+        "deals_filter_categories",
+        "deals_categories",
         "image_template_uri",
         "font_uri",
         "font_color",
@@ -85,6 +87,17 @@ class Config:
                 deals = config["deals"]
                 self.deals_min_discount: Optional[int] = deals.get("min_discount", None)
                 self.deals_max_price: Optional[int] = deals.get("max_price", None)
+                self.deals_filter_categories: Optional[bool] = deals[
+                    "filter_categories"
+                ] if deals["filter_categories"] else False
+                categories = deals["categories"]
+                self.deals_categories: List[AmazonDealsCategories] = list(
+                    map(
+                        lambda x: mappingsCategories[x],
+                        map(lambda e: e[0], filter(lambda k: k[1], categories.items())),
+                    )
+                )
+
                 # Telegram
                 telegram = config["telegram"]
                 self.telegram_channel_id = telegram["channel_id"]
@@ -202,3 +215,6 @@ class Config:
             log.info("Configuration Finished")
             return obj
         return Config.__instance__
+
+
+c = Config.get_instance()
