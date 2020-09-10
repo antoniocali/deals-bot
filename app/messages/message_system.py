@@ -1,6 +1,7 @@
 from __future__ import annotations
+from app.messages.model import Stats
 from app.utils import Utils
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Dict
 from app.logger import getLogger
 from app.models import AmazonDealsCategories, DealsModel
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -34,7 +35,7 @@ class MessageQueue:
             MessageQueue.__instance__ = self
             self._scheduler = BackgroundScheduler()
             self._lock = False
-            self._queue: Optional[List[DealsModel]] = list()
+            self._queue: List[DealsModel] = list()
             triggers = CronTrigger.from_crontab("0 0 * * *")
             self._scheduler.add_listener(self._listener, mask=EVENT_ALL)
             self._scheduler.add_job(
@@ -45,6 +46,7 @@ class MessageQueue:
             )
             self.first_run = True
             self.config = Config.get_instance()
+            self.stats = Stats()
             self._scheduler.start()
 
     def _listener(self, event):
@@ -73,12 +75,22 @@ class MessageQueue:
     def _refresh(self) -> None:
         if not self._lock:
             self._lock = True
+            self.stats = Stats()
             log.info("Refreshing Data")
             self._queue = self._get_deals_for_run()
             log.info("Data Refreshed")
-            log.info(
-                f"I've found {len(self._queue) if self._queue else 0} deals in this run."
-            )
+
+            log.info(f"TOTAL DEALS: {self.stats.totalFind}")
+            log.info(f"DEALS REMOVED BECAUSE ALREADY SENT: {self.stats.filter_out_db}")
+            log.info(f"DEALS REMOVED BECAUSE SIMILAR: {self.stats.removed_similar}")
+            log.info(f"FINAL QUEUE SIZE: {self.stats.queue}")
+            log.info("Deals distributed as following")
+            for elem in self.getQueueStats().items():
+                log.info(
+                    "{:<35}{:<40}".format(
+                        elem[0] if elem[0] else "NO CATEGORY", elem[1]
+                    )
+                )
             if self.first_run:
                 log.info("First Run Done!")
                 self.first_run = False
@@ -86,13 +98,12 @@ class MessageQueue:
         else:
             log.warning("Still refreshing data from previous run")
 
-    def _get_deals_for_run(self) -> Optional[List[DealsModel]]:
+    def _get_deals_for_run(self) -> List[DealsModel]:
         database = Database()
         config = self.config
         channel_id = config.telegram_id
         page = 1
         moreToFetch = True
-        postPerDay = config.telegram_posts_per_day
         min_discount = config.deals_min_discount
         max_price = config.deals_max_price
         categories = config.deals_categories if config.deals_filter_categories else None
@@ -119,11 +130,9 @@ class MessageQueue:
             )
             deals.extend(valid_deals)
             deals = self._remove_similar_products(deals)
-            if len(deals) >= postPerDay:
-                moreToFetch = False
-                break
             page += 1
-        return deals[:postPerDay]
+        self.stats.queue = len(deals)
+        return deals
 
     def _remove_similar_products(self, deals: List[DealsModel]) -> List[DealsModel]:
         tmpList: List[DealsModel] = list()
@@ -140,6 +149,7 @@ class MessageQueue:
             else:
                 log.info("Found two similar products:")
                 log.info(deal)
+                self.stats.removed_similar += 1
                 for x in tmpList:
                     if Utils.cosine_distance(x.description, deal.description) > 0.85:
                         log.info(x)
@@ -173,6 +183,19 @@ class MessageQueue:
         else:
             return None
 
+    def getQueueStats(self) -> Dict[Optional[AmazonDealsCategories], int]:
+        if self._lock and not self.first_run:
+            return {}
+        if not self._lock:
+            self._lock = True
+        stats: Dict[Optional[AmazonDealsCategories], int] = dict()
+        for elem in self._queue:
+            key = AmazonDealsCategories(elem.category) if elem.category else None
+            stats[key] = stats.get(key, 0) + 1
+        if not self.first_run and self._lock:
+            self._lock = False
+        return stats
+
     def filter_deals(
         self, database: Database, channel_id: int, config: Config
     ) -> Callable[[dict], Optional[DealsModel]]:
@@ -195,6 +218,7 @@ class MessageQueue:
         def filter_deal_wrapper(elem: dict) -> Optional[DealsModel]:
             deal: DealsModel = DealsModel.parse_obj(elem)
             dbDeal = database.getDeal(deal.impressionAsin)
+            self.stats.totalFind += 1
             if dbDeal and float(deal.dealPrice) >= float(dbDeal.deal_price):
                 searchTelegram = database.searchTelegramMessage(
                     channel_id=channel_id, asin=deal.impressionAsin
@@ -202,9 +226,6 @@ class MessageQueue:
                 if not searchTelegram:
                     return deal
                 else:
-                    log.info(
-                        f"{dbDeal} already present in database. Check if can post anyway."
-                    )
                     last_sent: date = datetime.strptime(
                         searchTelegram.updated_on, "%Y-%m-%d %H:%M:%S%z"
                     ).date()
@@ -213,9 +234,7 @@ class MessageQueue:
                     if timedifference.days >= config.telegram_repost_after_days:
                         return deal
                     else:
-                        log.info(
-                            f"{dbDeal} - Cannot post - {timedifference.days} Days passed from last post",
-                        )
+                        self.stats.filter_out_db += 1
                         return None
             else:
                 return deal
