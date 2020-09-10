@@ -1,6 +1,7 @@
+from os import stat
 import requests
 from app.config.config import Config
-from typing import Callable, Optional
+from typing import Callable, Optional, List, Dict
 import math
 import re
 from collections import Counter
@@ -139,3 +140,17 @@ class Utils:
             url=shortUrl,
             description=description,
         )
+
+    @staticmethod
+    def roundrobin(data: Dict) -> List:
+        req = data.copy()
+        index = 0
+        final_list = list()
+        while req:
+            for key in list(req):
+                try:
+                    final_list.append(req[key][index])
+                except IndexError:
+                    del req[key]
+            index += 1
+        return final_list
