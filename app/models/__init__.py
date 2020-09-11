@@ -17,6 +17,16 @@ class DealsModel(BaseModel):
     reviewRating: float = -1
 
 
+class TypeDeal(IntEnum):
+    AMAZON = 0
+    INSTANT_GAMING = 1
+
+
+class TypeDealsModel(BaseModel):
+    dealType: TypeDeal
+    deal: DealsModel
+
+
 class DiscountRange(IntEnum):
     MIN = 0
     MEDIUM = 1

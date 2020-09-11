@@ -1,4 +1,4 @@
-from app.models import DealsModel, DiscountRange, Website, AmazonDealsCategories
+from app.models import DealsModel, DiscountRange, TypeDealsModel, Website, AmazonDealsCategories
 from typing import List, Optional
 from fastapi import FastAPI, Query
 from app.fetchers.fetcher import fetch_data
@@ -9,7 +9,7 @@ app = FastAPI()
 @app.get("/amazon")
 def get_deals_amazon(
     discount_range: Optional[DiscountRange] = None,
-) -> List[DealsModel]:
+) -> List[TypeDealsModel]:
     params = discountRangeQueryParam(discount_range) if discount_range else ""
     return fetch_data(Website.AMAZON, {"filter": params})
 
@@ -20,7 +20,7 @@ def get_deals_camel(
     min_discount: Optional[int] = None,
     max_price: Optional[int] = None,
     category: Optional[List[AmazonDealsCategories]] = Query(None),
-) -> List[DealsModel]:
+) -> List[TypeDealsModel]:
     return fetch_data(
         Website.CAMEL,
         {
@@ -33,7 +33,7 @@ def get_deals_camel(
 
 
 @app.get("/instant")
-def get_deals_instant() -> List[DealsModel]:
+def get_deals_instant() -> List[TypeDealsModel]:
     return fetch_data(Website.INSTANT_GAMING, {})
 
 
