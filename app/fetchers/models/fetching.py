@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from app.models import AmazonDealsCategories, DealsModel
+from app.models import AmazonDealsCategories, DealsModel, TypeDeal, TypeDealsModel
 from typing import List, Optional
 from functools import reduce
 import requests
@@ -23,7 +23,7 @@ class FetcherAmazon(Fetcher):
     def __init__(self, headers: dict) -> None:
         self.headers = headers
 
-    def fetch_data(self, params: dict) -> List[DealsModel]:
+    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
         r = requests.get(
             f"https://www.amazon.it/gp/goldbox?gb_f_deals1={params['filter']}",
             headers=self.headers,
@@ -38,7 +38,7 @@ class FetcherAmazon(Fetcher):
         mandatoryKeys = set(
             [
                 "description",
-                "impressionAsin",
+                "id",
                 "primaryImage",
                 "maxBAmount",
                 "maxDealPrice",
@@ -48,15 +48,18 @@ class FetcherAmazon(Fetcher):
         )
         return list(
             map(
-                lambda item: DealsModel(
-                    description=item["description"],
-                    impressionAsin=item["impressionAsin"],
-                    imageUrl=item["primaryImage"],
-                    originalPrice=item["maxBAmount"],
-                    dealPrice=item["maxDealPrice"],
-                    percentOff=item["maxPercentOff"],
-                    reviewRating=item["reviewRating"],
-                    slug=slugify(item["description"]),
+                lambda item: TypeDealsModel(
+                    dealType=TypeDeal.AMAZON,
+                    deal=DealsModel(
+                        description=item["description"],
+                        id=item["id"],
+                        imageUrl=item["primaryImage"],
+                        originalPrice=item["maxBAmount"],
+                        dealPrice=item["maxDealPrice"],
+                        percentOff=item["maxPercentOff"],
+                        reviewRating=item["reviewRating"],
+                        slug=slugify(item["description"]),
+                    ),
                 ),
                 filter(
                     lambda item: set(item.keys()).issuperset(mandatoryKeys),
@@ -71,18 +74,20 @@ class FetcherCamel(Fetcher):
         self.headers = headers
         self.scraper = cfscrape.create_scraper()
 
-    def fetch_data(self, params: dict = None) -> List[DealsModel]:
+    def fetch_data(self, params: dict = None) -> List[TypeDealsModel]:
         pageQuery: int = params["page"]
         minDiscount: int = params.get("min_discount", None)
         maxPrice: int = params.get("max_price", None)
         categories: List[AmazonDealsCategories] = params.get("categories", None)
 
-        def flat_list(x: List[DealsModel], y: List[DealsModel]) -> List[DealsModel]:
+        def flat_list(
+            x: List[TypeDealsModel], y: List[TypeDealsModel]
+        ) -> List[TypeDealsModel]:
             x.extend(y)
             return x
 
         if categories:
-            tmpList: List[List[DealsModel]] = list()
+            tmpList: List[List[TypeDealsModel]] = list()
             for category in categories:
                 tmpList.append(
                     self._get_data(
@@ -105,7 +110,7 @@ class FetcherCamel(Fetcher):
         maxPrice: Optional[int] = None,
         minDiscount: Optional[int] = None,
         category: Optional[str] = None,
-    ) -> List[DealsModel]:
+    ) -> List[TypeDealsModel]:
         url = "https://it.camelcamelcamel.com/top_drops"
         url += f"?p={pageQuery}"
         if category:
@@ -177,15 +182,18 @@ class FetcherCamel(Fetcher):
 
         retList = list(
             map(
-                lambda item: DealsModel(
-                    dealPrice=item[0],
-                    originalPrice=item[1],
-                    percentOff=item[2],
-                    description=item[3],
-                    imageUrl=item[4],
-                    impressionAsin=item[5],
-                    slug=slugify(item[6]),
-                    category=category,
+                lambda item: TypeDealsModel(
+                    dealType=TypeDeal.AMAZON,
+                    deal=DealsModel(
+                        dealPrice=item[0],
+                        originalPrice=item[1],
+                        percentOff=item[2],
+                        description=item[3],
+                        imageUrl=item[4],
+                        id=item[5],
+                        slug=slugify(item[6]),
+                        category=category,
+                    ),
                 ),
                 dataAsinAndOriginalPrice,
             )
@@ -197,7 +205,7 @@ class FetcherInstantGaming(Fetcher):
     def __init__(self, headers: dict):
         self.headers = headers
 
-    def fetch_data(self, params: dict) -> List[DealsModel]:
+    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
         url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
         r = requests.get(url, headers=self.headers,)
         if not r.ok:
@@ -208,7 +216,7 @@ class FetcherInstantGaming(Fetcher):
         )
         extracted = selector.extract(r.text)
         importantData = zip(extracted["description"], extracted["html"])
-        data: List[DealsModel] = list()
+        data: List[TypeDealsModel] = list()
         regex = r"it\/([0-9]+)-"
         for elem in importantData:
             description = elem[0]
@@ -236,15 +244,17 @@ class FetcherInstantGaming(Fetcher):
             )
             originalPrice = round(dealPrice + (dealPrice * discount) / 100, 2)
             data.append(
-                DealsModel(
-                    dealPrice=dealPrice,
-                    originalPrice=originalPrice,
-                    percentOff=discount,
-                    description=description,
-                    imageUrl=imageUrl,
-                    impressionAsin=matcher.group(1),
-                    slug=slugify(description),
+                TypeDealsModel(
+                    dealType=TypeDeal.INSTANT_GAMING,
+                    deal=DealsModel(
+                        dealPrice=dealPrice,
+                        originalPrice=originalPrice,
+                        percentOff=discount,
+                        description=description,
+                        imageUrl=imageUrl,
+                        id=matcher.group(1),
+                        slug=slugify(description),
+                    ),
                 )
             )
         return data
-

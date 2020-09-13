@@ -13,7 +13,7 @@ test_list = [text_1, text_2, text_3, text_4, text_5]
 #     print(y)
 #     print(Utils.cosine_distance(x, y))
 # description: str
-# impressionAsin: str
+# id: str
 # imageUrl: str
 # originalPrice: float
 # dealPrice: float
@@ -22,7 +22,7 @@ test_list = [text_1, text_2, text_3, text_4, text_5]
 # reviewRating: float = -1
 deal_1 = DealsModel(
     description=text_4,
-    impressionAsin="B008BSRE0W",
+    id="B008BSRE0W",
     imageUrl="https://images-na.ssl-images-amazon.com/images/I/61ejJSt6RlL._AC_UX625_.jpg",
     originalPrice=53.99,
     dealPrice=27.99,
@@ -32,7 +32,7 @@ deal_1 = DealsModel(
 
 deal_2 = DealsModel(
     description=text_5,
-    impressionAsin="B008BSREIE",
+    id="B008BSREIE",
     imageUrl="https://images-na.ssl-images-amazon.com/images/I/61ejJSt6RlL._AC_UX625_.jpg",
     originalPrice=53.99,
     dealPrice=27.99,
@@ -41,7 +41,7 @@ deal_2 = DealsModel(
 )
 deal_3 = DealsModel(
     description=text_1,
-    impressionAsin="B008BSREIE",
+    id="B008BSREIE",
     imageUrl="https://images-na.ssl-images-amazon.com/images/I/61ejJSt6RlL._AC_UX625_.jpg",
     originalPrice=53.99,
     dealPrice=27.99,
@@ -50,7 +50,7 @@ deal_3 = DealsModel(
 )
 deal_4 = DealsModel(
     description=text_2,
-    impressionAsin="B008BSREIE",
+    id="B008BSREIE",
     imageUrl="https://images-na.ssl-images-amazon.com/images/I/61ejJSt6RlL._AC_UX625_.jpg",
     originalPrice=53.99,
     dealPrice=27.99,
@@ -59,7 +59,7 @@ deal_4 = DealsModel(
 )
 deal_5 = DealsModel(
     description=text_3,
-    impressionAsin="B008BSREIE",
+    id="B008BSREIE",
     imageUrl="https://images-na.ssl-images-amazon.com/images/I/61ejJSt6RlL._AC_UX625_.jpg",
     originalPrice=53.99,
     dealPrice=27.99,

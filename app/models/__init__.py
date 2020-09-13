@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 class DealsModel(BaseModel):
     description: str
-    impressionAsin: str
+    id: str
     imageUrl: str
     originalPrice: float
     dealPrice: float
@@ -15,6 +15,16 @@ class DealsModel(BaseModel):
     slug: str
     category: Optional[str] = None
     reviewRating: float = -1
+
+
+class TypeDeal(IntEnum):
+    AMAZON = 0
+    INSTANT_GAMING = 1
+
+
+class TypeDealsModel(BaseModel):
+    dealType: TypeDeal
+    deal: DealsModel
 
 
 class DiscountRange(IntEnum):

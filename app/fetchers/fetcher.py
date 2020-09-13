@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.models import DealsModel, Website
+from app.models import TypeDealsModel, Website
 from app.fetchers.models.fetching import FetcherAmazon, FetcherCamel, FetcherInstantGaming
 
 
@@ -25,5 +25,5 @@ websites = {
 }
 
 
-def fetch_data(website: Website, params: Optional[dict] = None) -> List[DealsModel]:
+def fetch_data(website: Website, params: Optional[dict] = None) -> List[TypeDealsModel]:
     return websites[website].fetch_data(params)

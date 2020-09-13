@@ -19,6 +19,7 @@ templated = set(
         "shorten_bitly_token",
         "shorten_shortest_token",
         "amazon_affiliate",
+        "instant_gaming_affiliate",
         "telegram_channel_id",
         "telegram_repost_after_days",
         "telegram_posts_per_day",
@@ -83,6 +84,8 @@ class Config:
 
                 # Amazon
                 self.amazon_affiliate = config["amazon_affiliate"]
+                # Instant Gaming
+                self.instant_gaming_affiliate = config["instant_gaming_affiliate"]
                 # Deals
                 deals = config["deals"]
                 self.deals_min_discount: Optional[int] = deals.get("min_discount", None)
