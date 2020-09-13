@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 class DealsModel(BaseModel):
     description: str
-    impressionAsin: str
+    id: str
     imageUrl: str
     originalPrice: float
     dealPrice: float

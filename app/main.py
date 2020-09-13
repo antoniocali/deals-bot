@@ -1,4 +1,4 @@
-from app.models import DealsModel, DiscountRange, TypeDealsModel, Website, AmazonDealsCategories
+from app.models import DiscountRange, TypeDealsModel, Website, AmazonDealsCategories
 from typing import List, Optional
 from fastapi import FastAPI, Query
 from app.fetchers.fetcher import fetch_data

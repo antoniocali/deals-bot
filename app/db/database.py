@@ -3,13 +3,13 @@ from peewee import (
     DoesNotExist,
 )
 
-from app.db.tables import AmazonDeal, TelegramMessage
+from app.db.tables import Deal, DealType, TelegramMessage
 from app.db import db
 from datetime import datetime
-from app.models import DealsModel, TelegramMessageModel
-from typing import Optional, List
+from app.models import TelegramMessageModel, TypeDealsModel
+from typing import Optional
 
-tables = [AmazonDeal, TelegramMessage]
+tables = [Deal, TelegramMessage, DealType]
 
 
 class Database:
@@ -29,61 +29,67 @@ class Database:
             if not db.table_exists(table):
                 self.db.create_tables([table])
 
-    def getDeal(self, asin: str) -> Optional[AmazonDeal]:
+    def getDeal(self, deal: TypeDealsModel) -> Optional[Deal]:
         try:
-            deal = AmazonDeal.get(AmazonDeal.asin == asin)
+            _deal = Deal.get(
+                Deal.id == deal.deal.id, Deal.deal_type == deal.dealType.value
+            )
         except DoesNotExist:
-            deal = None
+            _deal = None
         finally:
-            return deal
+            return _deal
 
-    def _createDeal(self, deal: DealsModel) -> AmazonDeal:
-        deal = AmazonDeal.create(
-            asin=deal.impressionAsin,
-            original_price=deal.originalPrice,
-            deal_price=deal.dealPrice,
-            percent_off=deal.percentOff,
-            description=deal.description,
-            review_rating=deal.reviewRating,
-            image_url=deal.imageUrl,
+    def _createDeal(self, deal: TypeDealsModel) -> Deal:
+        d = deal.deal
+        _deal = Deal.create(
+            id=d.id,
+            deal_type=deal.dealType.value,
+            original_price=d.originalPrice,
+            deal_price=d.dealPrice,
+            percent_off=d.percentOff,
+            description=d.description,
+            review_rating=d.reviewRating,
+            image_url=d.imageUrl,
         )
-        return deal
+        return _deal
 
-    def upsertDeal(self, deal: DealsModel) -> AmazonDeal:
-        retDeal = self.getDeal(deal.impressionAsin)
+    def upsertDeal(self, deal: TypeDealsModel) -> Deal:
+        retDeal = self.getDeal(deal)
         if not retDeal:
             return self._createDeal(deal)
-        elif float(deal.dealPrice) < float(retDeal.deal_price):
-            retDeal.deal_price = deal.dealPrice
+        elif float(deal.deal.dealPrice) < float(retDeal.deal_price):
+            retDeal.deal_price = deal.deal.dealPrice
             retDeal.update_on = datetime.now()
             retDeal.save()
         return retDeal
 
     def _createTelegramMessage(
-        self, telegramMsg: TelegramMessageModel, asin: str
+        self, telegramMsg: TelegramMessageModel, deal: TypeDealsModel
     ) -> Optional[TelegramMessage]:
-        deal: Optional[AmazonDeal] = self.getDeal(asin)
-        if not deal:
+        _deal: Optional[Deal] = self.getDeal(deal)
+        if not _deal:
             return None
         else:
             telegram = TelegramMessage.create(
                 id=telegramMsg.id,
                 channel_id=telegramMsg.channel_id,
-                asin=deal,
+                deal=deal.deal,
+                deal_type=deal.dealType.value,
                 sent_on=telegramMsg.datetime,
                 updated_on=telegramMsg.datetime,
             )
             return telegram
 
     def getTelegramMessage(
-        self, telegramMsg: TelegramMessageModel, asin: str
+        self, telegramMsg: TelegramMessageModel, deal: TypeDealsModel
     ) -> Optional[TelegramMessage]:
         try:
-            deal = AmazonDeal.get(AmazonDeal.asin == asin)
+            _deal = self.getDeal(deal)
             telMsg = TelegramMessage.get(
                 TelegramMessage.id == telegramMsg.id,
                 TelegramMessage.channel_id == telegramMsg.channel_id,
-                TelegramMessage.asin == deal,
+                TelegramMessage.deal == _deal,
+                TelegramMessage.deal_type == deal.dealType.value,
             )
         except DoesNotExist:
             telMsg = None
@@ -91,23 +97,25 @@ class Database:
             return telMsg
 
     def upsertTelegramMessage(
-        self, telegramMsg: TelegramMessageModel, asin: str
+        self, telegramMsg: TelegramMessageModel, deal: TypeDealsModel
     ) -> Optional[TelegramMessage]:
-        retTelegram = self.getTelegramMessage(telegramMsg=telegramMsg, asin=asin)
+        retTelegram = self.getTelegramMessage(telegramMsg=telegramMsg, deal=deal)
         if not retTelegram:
-            return self._createTelegramMessage(telegramMsg=telegramMsg, asin=asin)
+            return self._createTelegramMessage(telegramMsg=telegramMsg, deal=deal)
         else:
             retTelegram.updated_on = telegramMsg.datetime
             retTelegram.save()
         return retTelegram
 
     def searchTelegramMessage(
-        self, channel_id: int, asin: str
+        self, channel_id: int, deal: TypeDealsModel
     ) -> Optional[TelegramMessage]:
         try:
-            deal = AmazonDeal.get(AmazonDeal.asin == asin)
+            _deal = self.getDeal(deal=deal)
             telMsg = TelegramMessage.get(
-                TelegramMessage.channel_id == channel_id, TelegramMessage.asin == deal
+                TelegramMessage.channel_id == channel_id,
+                TelegramMessage.id == _deal,
+                TelegramMessage.deal_type == deal.dealType.value,
             )
         except DoesNotExist:
             telMsg = None
@@ -115,5 +123,5 @@ class Database:
             return telMsg
 
     def deals(self):
-        deals = AmazonDeal.select()
+        deals = Deal.select()
         return deals

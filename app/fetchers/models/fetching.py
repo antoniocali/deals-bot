@@ -38,7 +38,7 @@ class FetcherAmazon(Fetcher):
         mandatoryKeys = set(
             [
                 "description",
-                "impressionAsin",
+                "id",
                 "primaryImage",
                 "maxBAmount",
                 "maxDealPrice",
@@ -49,10 +49,10 @@ class FetcherAmazon(Fetcher):
         return list(
             map(
                 lambda item: TypeDealsModel(
-                    type=TypeDeal.AMAZON,
+                    dealType=TypeDeal.AMAZON,
                     deal=DealsModel(
                         description=item["description"],
-                        impressionAsin=item["impressionAsin"],
+                        id=item["id"],
                         imageUrl=item["primaryImage"],
                         originalPrice=item["maxBAmount"],
                         dealPrice=item["maxDealPrice"],
@@ -183,14 +183,14 @@ class FetcherCamel(Fetcher):
         retList = list(
             map(
                 lambda item: TypeDealsModel(
-                    type=TypeDeal.AMAZON,
+                    dealType=TypeDeal.AMAZON,
                     deal=DealsModel(
                         dealPrice=item[0],
                         originalPrice=item[1],
                         percentOff=item[2],
                         description=item[3],
                         imageUrl=item[4],
-                        impressionAsin=item[5],
+                        id=item[5],
                         slug=slugify(item[6]),
                         category=category,
                     ),
@@ -245,14 +245,14 @@ class FetcherInstantGaming(Fetcher):
             originalPrice = round(dealPrice + (dealPrice * discount) / 100, 2)
             data.append(
                 TypeDealsModel(
-                    type=TypeDeal.INSTANT_GAMING,
+                    dealType=TypeDeal.INSTANT_GAMING,
                     deal=DealsModel(
                         dealPrice=dealPrice,
                         originalPrice=originalPrice,
                         percentOff=discount,
                         description=description,
                         imageUrl=imageUrl,
-                        impressionAsin=matcher.group(1),
+                        id=matcher.group(1),
                         slug=slugify(description),
                     ),
                 )
