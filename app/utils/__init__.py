@@ -1,4 +1,3 @@
-from os import stat
 import requests
 from app.config.config import Config
 from typing import Callable, Optional, List, Dict
@@ -6,7 +5,7 @@ import math
 import re
 from collections import Counter
 from datetime import datetime
-from app.models import ShortenProvider
+from app.models import DealsModel, ShortenProvider, TypeDeal, TypeDealsModel
 
 
 class Utils:
@@ -19,7 +18,7 @@ class Utils:
 
     @staticmethod
     def shortUrl(url: str, provider: ShortenProvider):
-        short_url: dict[ShortenProvider, Callable[[str], Optional[str]]] = {
+        short_url: Dict[ShortenProvider, Callable[[str], Optional[str]]] = {
             ShortenProvider.FREE: Utils._shortFree,
             ShortenProvider.SHORTEST: Utils._shortShortest,
             ShortenProvider.BITLY: Utils._shortBitly,
@@ -69,9 +68,17 @@ class Utils:
             return None
 
     @staticmethod
-    def amazonAffiliateLink(asin: str) -> str:
+    def affiliateAmazon(deal: DealsModel) -> str:
         config = Config.get_instance()
         affiliateToken = config.amazon_affiliate
+        asin = deal.id
+        return f"https://www.amazon.it/gp/product/{asin}/ref=as_li_tl?creativeASIN={asin}&tag={affiliateToken}"
+
+    @staticmethod
+    def affiliateInstant(deal: DealsModel) -> str:
+        config = Config.get_instance()
+        affiliateToken = config.amazon_affiliate
+        asin = deal.id
         return f"https://www.amazon.it/gp/product/{asin}/ref=as_li_tl?creativeASIN={asin}&tag={affiliateToken}"
 
     @staticmethod
@@ -119,27 +126,31 @@ class Utils:
                 return start_hour <= current_hour <= end_hour
 
     @staticmethod
-    def message(
-        originalPrice: float,
-        dealPrice: float,
-        discount: int,
-        asin: str,
-        description: str,
-    ) -> str:
+    def message(deal: TypeDealsModel) -> str:
         config = Config.get_instance()
         message_template = config.telegram_message_template
-        affialiateLink = Utils.amazonAffiliateLink(asin)
+        affialiateLink = Utils.generateUrl(deal)
         shortUrlProvider = config.shorten_provider
         shortUrl = Utils.shortUrl(url=affialiateLink, provider=shortUrlProvider)
+        _deal = deal.deal
         # In case short Url doesn't work I use long url
         shortUrl = shortUrl if shortUrl else affialiateLink
         return message_template.format(
-            originalPrice="%.2f" % originalPrice,
-            dealPrice="%.2f" % dealPrice,
-            discount=discount,
+            originalPrice="%.2f" % _deal.originalPrice,
+            dealPrice="%.2f" % _deal.dealPrice,
+            discount=_deal.percentOff,
             url=shortUrl,
-            description=description,
+            description=_deal.description,
         )
+
+    @staticmethod
+    def generateUrl(deal: TypeDealsModel) -> str:
+        generators: Dict[TypeDeal, Callable[[DealsModel], str]] = {
+            TypeDeal.AMAZON: Utils.affiliateAmazon,
+            TypeDeal.INSTANT_GAMING: Utils.affiliateInstant,
+        }
+
+        return generators[deal.dealType](deal.deal)
 
     @staticmethod
     def roundrobin(data: Dict) -> List:

@@ -258,4 +258,3 @@ class FetcherInstantGaming(Fetcher):
                 )
             )
         return data
-

@@ -6,7 +6,7 @@ from telethon.tl.tlobject import TLObject
 import time
 from app.utils import Utils
 from app.config.config import Config
-from app.models import DealsModel, TelegramMessageModel
+from app.models import TelegramMessageModel, TypeDealsModel
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers import interval, date as datetrigger
 from apscheduler.events import (
@@ -108,36 +108,28 @@ async def message_system():
 
 
 async def send_message(
-    deal: DealsModel,
+    deal: TypeDealsModel,
     database: Database,
     channel_type: TLObject,
     channel_id: int,
     save_on_db: bool = True,
 ):
+    _deal = deal.deal
     path = image_util.create_image(
-        originalPrice=deal.originalPrice,
-        dealPrice=deal.dealPrice,
-        imageUrl=deal.imageUrl,
-        save_as=deal.impressionAsin,
+        originalPrice=_deal.originalPrice,
+        dealPrice=_deal.dealPrice,
+        imageUrl=_deal.imageUrl,
+        save_as=_deal.id,
     )
     if save_on_db:
         database.upsertDeal(deal)
     msg = await bot.send_file(
-        channel_type,
-        file=path,
-        caption=Utils.message(
-            deal.originalPrice,
-            deal.dealPrice,
-            deal.percentOff,
-            deal.impressionAsin,
-            deal.description,
-        ),
-        force_document=False,
+        channel_type, file=path, caption=Utils.message(deal), force_document=False,
     )
     if save_on_db:
         database.upsertTelegramMessage(
             TelegramMessageModel(id=msg.id, channel_id=channel_id, datetime=msg.date),
-            deal.impressionAsin,
+            deal,
         )
     image_util.delete_tmp_image(path)
 
