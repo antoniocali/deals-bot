@@ -5,7 +5,8 @@ from app.db.tables import Deal, DealType, TelegramMessage
 from app.models import TypeDeal
 
 migrator = SqliteMigrator(db)
-
+DealType.drop_table()
+Deal.drop_table()
 DealType.create_table()
 Deal.create_table()
 
@@ -18,7 +19,6 @@ for elem in TypeDeal:
 migrate(
     migrator.rename_column("amazondeal", "asin", "id"),
     migrator.add_column("deal", "deal_type", deal_field),
-    migrator.rename_table("deal", "amazondeal"),
     migrator.rename_table("telegrammessage", "telegrammessage_old")
 )
 
