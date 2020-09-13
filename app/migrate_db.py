@@ -16,9 +16,12 @@ deal_field = IntegerField(null=False, default=TypeDeal.AMAZON.value)
 for elem in TypeDeal:
     DealType.create(id=elem.value, description=elem.name)
 
+if db.table_exists("amazondeal"):
+    if "asin" in db.get_columns("amazondeal"):
+        migrate(migrator.rename_column("amazondeal", "asin", "id"))
+
+
 migrate(
-    migrator.rename_column("amazondeal", "asin", "id"),
-    migrator.add_column("deal", "deal_type", deal_field),
     migrator.rename_table("telegrammessage", "telegrammessage_old")
 )
 
