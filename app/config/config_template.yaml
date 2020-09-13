@@ -32,6 +32,8 @@ deals:
     shoes: false
     sport: false
     videogames: false
+# instant-gaming
+instant_gaming_affiliate: 
 # telegram 
 telegram:
   channel_id: 
