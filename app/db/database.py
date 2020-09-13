@@ -57,7 +57,7 @@ class Database:
         retDeal = self.getDeal(deal)
         if not retDeal:
             return self._createDeal(deal)
-        elif float(deal.deal.dealPrice) < float(retDeal.deal_price):
+        elif float(deal.deal.dealPrice) < retDeal.deal_price:
             retDeal.deal_price = deal.deal.dealPrice
             retDeal.update_on = datetime.now()
             retDeal.save()
@@ -73,7 +73,7 @@ class Database:
             telegram = TelegramMessage.create(
                 id=telegramMsg.id,
                 channel_id=telegramMsg.channel_id,
-                deal=deal.deal,
+                deal=_deal,
                 deal_type=deal.dealType.value,
                 sent_on=telegramMsg.datetime,
                 updated_on=telegramMsg.datetime,

@@ -140,7 +140,20 @@ class Utils:
             discount=_deal.percentOff,
             url=shortUrl,
             description=_deal.description,
+            hashtags=""
+            if not _deal.category
+            else f"#{' #'.join(Utils.generateHashtags(_deal.category))}",
         )
+
+    @staticmethod
+    def generateHashtags(
+        text: str, min_letters: int = 3, delimitator: str = "-"
+    ) -> List[str]:
+        if not text:
+            return []
+        else:
+            _split = text.strip().split(delimitator)
+            return list(filter(lambda x: len(x) >= min_letters, _split))
 
     @staticmethod
     def generateUrl(deal: TypeDealsModel) -> str:

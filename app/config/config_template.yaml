@@ -50,7 +50,8 @@ telegram:
   # Leave the | at start and be careful with indentation,
   message_template: |
         ⚡ You can use emoji
-        And you can use the followings tags in your message: {description}, {originalPrice}, {dealPrice}, {discount}, {url}
+        And you can use the followings tags in your message: 
+        {description}, {originalPrice}, {dealPrice}, {discount}, {url}, {hashtags}
         those will be automatically replaced.
         You can also use **BOLD**, or __Italic__ for formatting the text.
         leave an extra white line after the end of the message template
