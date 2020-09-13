@@ -77,9 +77,8 @@ class Utils:
     @staticmethod
     def affiliateInstant(deal: DealsModel) -> str:
         config = Config.get_instance()
-        affiliateToken = config.amazon_affiliate
-        asin = deal.id
-        return f"https://www.amazon.it/gp/product/{asin}/ref=as_li_tl?creativeASIN={asin}&tag={affiliateToken}"
+        affiliateToken = config.instant_gaming_affiliate
+        return f"https://www.instant-gaming.com/it/{deal.id}-{deal.slug}/?igr={affiliateToken}"
 
     @staticmethod
     def delayBetweenTelegramMessages() -> int:
