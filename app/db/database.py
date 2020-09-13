@@ -114,7 +114,7 @@ class Database:
             _deal = self.getDeal(deal=deal)
             telMsg = TelegramMessage.get(
                 TelegramMessage.channel_id == channel_id,
-                TelegramMessage.id == _deal,
+                TelegramMessage.deal == _deal,
                 TelegramMessage.deal_type == deal.dealType.value,
             )
         except DoesNotExist:
