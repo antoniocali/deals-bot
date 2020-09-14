@@ -166,7 +166,7 @@ class MessageQueue:
                 map(
                     self.filter_deals(
                         database=database,
-                        channel_id=self.config.telegram_channel_id,
+                        channel_id=self.config.telegram_id,
                         config=self.config,
                     ),
                     data,
