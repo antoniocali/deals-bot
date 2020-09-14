@@ -99,49 +99,94 @@ class MessageQueue:
             log.warning("Still refreshing data from previous run")
 
     def _get_deals_for_run(self) -> List[TypeDealsModel]:
-        database = Database()
-        config = self.config
-        channel_id = config.telegram_id
+        deals = self._fetch_camel()
+        self.stats.queue = len(deals)
+        return deals
+
+    def _fetch_camel(self) -> List[TypeDealsModel]:
+        # Internal Fetch for camel
+        def _fetch_more(
+            page: int,
+            min_discount: Optional[int] = None,
+            max_price: Optional[int] = None,
+            categories: Optional[List[AmazonDealsCategories]] = None,
+        ) -> Optional[List[dict]]:
+            """ Fetch as much deals as I can from Camel
+            """
+            url = "http://localhost:8000/"
+            queryParams = f"?page={page}"
+            if min_discount:
+                queryParams += f"&min_discount={min_discount}"
+            if max_price:
+                queryParams += f"&max_price={max_price}"
+            if categories:
+                queryParams += (
+                    f"&category={'&category='.join(map(lambda x: x.value, categories))}"
+                )
+            req = requests.get(url + f"camel{queryParams}")
+            if req.ok:
+                response = req.json()
+                return response
+            else:
+                return None
+
+        # Params for fetching camel
         page = 1
         moreToFetch = True
-        min_discount = config.deals_min_discount
-        max_price = config.deals_max_price
-        categories = config.deals_categories if config.deals_filter_categories else None
-        deals = list()
+        min_discount = self.config.deals_min_discount
+        max_price = self.config.deals_max_price
+        categories = (
+            self.config.deals_categories
+            if self.config.deals_filter_categories
+            else None
+        )
+        data: List[dict] = list()
         while moreToFetch:
-            data = self._fetch_more(
+            _data = _fetch_more(
                 page=page,
                 min_discount=min_discount,
                 max_price=max_price,
                 categories=categories,
             )
-            if not data:
+            if not _data:
                 log.info("No More Data to Fetch")
                 moreToFetch = False
                 continue
-            valid_deals = filter(
+            data.extend(_data)
+            page += 1
+        deals: List[TypeDealsModel] = self.etl_deals(data)
+        deals = self._remove_similar_products(deals)
+        return deals
+
+    def etl_deals(self, data: List[Dict]) -> List[TypeDealsModel]:
+        database = Database()
+        return list(
+            filter(
                 None,
                 map(
                     self.filter_deals(
-                        database=database, channel_id=channel_id, config=config
+                        database=database,
+                        channel_id=self.config.telegram_channel_id,
+                        config=self.config,
                     ),
                     data,
                 ),
             )
-            deals.extend(valid_deals)
-            deals = self._remove_similar_products(deals)
-            page += 1
-        self.stats.queue = len(deals)
-        return deals
+        )
 
-    def _remove_similar_products(self, deals: List[TypeDealsModel]) -> List[TypeDealsModel]:
+    def _remove_similar_products(
+        self, deals: List[TypeDealsModel]
+    ) -> List[TypeDealsModel]:
         tmpList: List[TypeDealsModel] = list()
         for deal in deals:
             if not any(
                 map(
                     lambda x: False
                     if x == deal
-                    else Utils.cosine_distance(x.deal.description, deal.deal.description) > 0.85,
+                    else Utils.cosine_distance(
+                        x.deal.description, deal.deal.description
+                    )
+                    > 0.85,
                     tmpList,
                 )
             ):
@@ -151,37 +196,14 @@ class MessageQueue:
                 log.info(deal)
                 self.stats.removed_similar += 1
                 for x in tmpList:
-                    if Utils.cosine_distance(x.deal.description, deal.deal.description) > 0.85:
+                    if (
+                        Utils.cosine_distance(x.deal.description, deal.deal.description)
+                        > 0.85
+                    ):
                         log.info(x)
                         break
 
         return tmpList
-
-    def _fetch_more(
-        self,
-        page: int,
-        min_discount: Optional[int] = None,
-        max_price: Optional[int] = None,
-        categories: Optional[List[AmazonDealsCategories]] = None,
-    ) -> Optional[List[dict]]:
-        """ Fetch as much deals as I can from Camel
-        """
-        url = "http://localhost:8000/"
-        queryParams = f"?page={page}"
-        if min_discount:
-            queryParams += f"&min_discount={min_discount}"
-        if max_price:
-            queryParams += f"&max_price={max_price}"
-        if categories:
-            queryParams += (
-                f"&category={'&category='.join(map(lambda x: x.value, categories))}"
-            )
-        req = requests.get(url + f"camel{queryParams}")
-        if req.ok:
-            response = req.json()
-            return response
-        else:
-            return None
 
     def getQueueStats(self) -> Dict[Optional[AmazonDealsCategories], int]:
         if self._lock and not self.first_run:
@@ -190,7 +212,11 @@ class MessageQueue:
             self._lock = True
         stats: Dict[Optional[AmazonDealsCategories], int] = dict()
         for elem in self._queue:
-            key = AmazonDealsCategories(elem.deal.category) if elem.deal.category else None
+            key = (
+                AmazonDealsCategories(elem.deal.category)
+                if elem.deal.category
+                else None
+            )
             stats[key] = stats.get(key, 0) + 1
         if not self.first_run and self._lock:
             self._lock = False
