@@ -254,6 +254,7 @@ class FetcherInstantGaming(Fetcher):
                         imageUrl=imageUrl,
                         id=matcher.group(1),
                         slug=slugify(description),
+                        category="videogames-computer"
                     ),
                 )
             )
