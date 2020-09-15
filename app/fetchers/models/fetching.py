@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
-from app.models import AmazonDealsCategories, DealsModel, TypeDeal, TypeDealsModel
+from app.models import DealsCategories, DealsModel, TypeDeal, TypeDealsModel
 from typing import List, Optional
 from functools import reduce
 import requests
@@ -78,7 +78,7 @@ class FetcherCamel(Fetcher):
         pageQuery: int = params["page"]
         minDiscount: int = params.get("min_discount", None)
         maxPrice: int = params.get("max_price", None)
-        categories: List[AmazonDealsCategories] = params.get("categories", None)
+        categories: List[DealsCategories] = params.get("categories", None)
 
         def flat_list(
             x: List[TypeDealsModel], y: List[TypeDealsModel]
@@ -254,7 +254,7 @@ class FetcherInstantGaming(Fetcher):
                         imageUrl=imageUrl,
                         id=matcher.group(1),
                         slug=slugify(description),
-                        category="videogames-computer"
+                        category=DealsCategories.INSTANT.value
                     ),
                 )
             )

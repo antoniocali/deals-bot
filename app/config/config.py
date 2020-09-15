@@ -6,7 +6,7 @@ from telethon import TelegramClient
 from telethon.errors import BotInvalidError
 from telethon.tl.types import InputPeerUser, InputPeerChannel
 from telethon.tl.tlobject import TLObject
-from app.models import AmazonDealsCategories, ShortenProvider, mappingsCategories
+from app.models import DealsCategories, ShortenProvider, mappingsCategories
 
 log = getLogger("CONFIG")
 
@@ -94,7 +94,7 @@ class Config:
                     "filter_categories"
                 ] if deals["filter_categories"] else False
                 categories = deals["categories"]
-                self.deals_categories: List[AmazonDealsCategories] = list(
+                self.deals_categories: List[DealsCategories] = list(
                     map(
                         lambda x: mappingsCategories[x],
                         map(lambda e: e[0], filter(lambda k: k[1], categories.items())),

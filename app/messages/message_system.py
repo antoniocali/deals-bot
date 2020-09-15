@@ -3,7 +3,7 @@ from app.messages.model import Stats
 from app.utils import Utils
 from typing import Optional, List, Callable, Dict
 from app.logger import getLogger
-from app.models import AmazonDealsCategories, TypeDealsModel
+from app.models import DealsCategories, TypeDealsModel
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.events import (
@@ -100,7 +100,20 @@ class MessageQueue:
 
     def _get_deals_for_run(self) -> List[TypeDealsModel]:
         deals = self._fetch_camel()
+        deals.extend(self._fetch_instant())
+        deals = Utils.roundrobin(self.getQueueByCategories(deals))
         self.stats.queue = len(deals)
+        return deals
+
+    def _fetch_instant(self) -> List[TypeDealsModel]:
+        url = "http://localhost:8000/instant"
+        req = requests.get(url)
+        if req.ok:
+            response = req.json()
+            data = response
+        else:
+            return []
+        deals = self.etl_deals(data)
         return deals
 
     def _fetch_camel(self) -> List[TypeDealsModel]:
@@ -109,7 +122,7 @@ class MessageQueue:
             page: int,
             min_discount: Optional[int] = None,
             max_price: Optional[int] = None,
-            categories: Optional[List[AmazonDealsCategories]] = None,
+            categories: Optional[List[DealsCategories]] = None,
         ) -> Optional[List[dict]]:
             """ Fetch as much deals as I can from Camel
             """
@@ -205,19 +218,26 @@ class MessageQueue:
 
         return tmpList
 
-    def getQueueStats(self) -> Dict[Optional[AmazonDealsCategories], int]:
+    def getQueueByCategories(
+        self, queue: List[TypeDealsModel]
+    ) -> Dict[Optional[DealsCategories], List[TypeDealsModel]]:
+        categories: Dict[Optional[DealsCategories], List[TypeDealsModel]] = dict()
+        for elem in queue:
+            key = DealsCategories(elem.deal.category) if elem.deal.category else None
+            if key in categories:
+                categories[key].append(elem)
+            else:
+                categories[key] = [elem]
+        return categories
+
+    def getQueueStats(self) -> Dict[Optional[DealsCategories], int]:
         if self._lock and not self.first_run:
             return {}
         if not self._lock:
             self._lock = True
-        stats: Dict[Optional[AmazonDealsCategories], int] = dict()
-        for elem in self._queue:
-            key = (
-                AmazonDealsCategories(elem.deal.category)
-                if elem.deal.category
-                else None
-            )
-            stats[key] = stats.get(key, 0) + 1
+        stats: Dict[Optional[DealsCategories], int] = {
+            x: len(y) for x, y in self.getQueueByCategories(self._queue).items()
+        }
         if not self.first_run and self._lock:
             self._lock = False
         return stats

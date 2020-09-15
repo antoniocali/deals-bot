@@ -40,7 +40,7 @@ class Website(IntEnum):
     INSTANT_GAMING = 2
 
 
-class AmazonDealsCategories(Enum):
+class DealsCategories(Enum):
     OTHER = "altro"
     AUTO = "auto-e-moto"
     HOME = "casa-e-cucina"
@@ -56,23 +56,24 @@ class AmazonDealsCategories(Enum):
     SHOES = "scarpe-e-borse"
     SPORT = "sport-e-tempo-libero"
     VIDEOGAMES = "videogiochi"
+    INSTANT = "instant-gaming-computer-videogames"
 
 
-mappingsCategories: Dict[str, AmazonDealsCategories] = {
-    "other": AmazonDealsCategories.OTHER,
-    "auto": AmazonDealsCategories.AUTO,
-    "home": AmazonDealsCategories.HOME,
-    "electronics": AmazonDealsCategories.ELECTRONICS,
-    "computer": AmazonDealsCategories.COMPUTER,
-    "film": AmazonDealsCategories.FILM,
-    "toys": AmazonDealsCategories.TOYS,
-    "lighting": AmazonDealsCategories.LIGHTING,
-    "books": AmazonDealsCategories.BOOKS,
-    "music": AmazonDealsCategories.MUSIC,
-    "watches": AmazonDealsCategories.WATCHES,
-    "shoes": AmazonDealsCategories.SHOES,
-    "sport": AmazonDealsCategories.SPORT,
-    "videogames": AmazonDealsCategories.VIDEOGAMES,
+mappingsCategories: Dict[str, DealsCategories] = {
+    "other": DealsCategories.OTHER,
+    "auto": DealsCategories.AUTO,
+    "home": DealsCategories.HOME,
+    "electronics": DealsCategories.ELECTRONICS,
+    "computer": DealsCategories.COMPUTER,
+    "film": DealsCategories.FILM,
+    "toys": DealsCategories.TOYS,
+    "lighting": DealsCategories.LIGHTING,
+    "books": DealsCategories.BOOKS,
+    "music": DealsCategories.MUSIC,
+    "watches": DealsCategories.WATCHES,
+    "shoes": DealsCategories.SHOES,
+    "sport": DealsCategories.SPORT,
+    "videogames": DealsCategories.VIDEOGAMES,
 }
 
 

@@ -7,5 +7,5 @@ while 1:
     if c.isLock():
         sleep(1)
     else:
-        print(c.nextElem())
+        print(c.nextElem().deal.category)
         sleep(1)
