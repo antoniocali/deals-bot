@@ -169,7 +169,7 @@ class MessageQueue:
                 categories=categories,
             )
             if not _data:
-                log.info("No More Data to Fetch")
+                log.info("AMAZON - No More Data to Fetch")
                 moreToFetch = False
                 continue
             data.extend(_data)

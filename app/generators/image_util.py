@@ -3,6 +3,7 @@ from app.config.config import Config
 from PIL import Image, ImageDraw, ImageFont
 import urllib.request
 from os import path, makedirs, remove
+from app.fetchers.fetcher import headers
 
 right = 180
 up = 80
@@ -54,7 +55,9 @@ def create_image(
         dOriginal = ImageDraw.Draw(txtOriginal)
         # write text
 
-        originalPriceFont = ImageFont.truetype(config.font_uri, int(config.font_size / 2))
+        originalPriceFont = ImageFont.truetype(
+            config.font_uri, int(config.font_size / 2)
+        )
         dOriginal.text(
             (width * 0.2, height / 2 - 20),
             ("%.2f" % originalPrice) + currency,
@@ -67,7 +70,10 @@ def create_image(
             width=4,
         )
         # Get Image From Web
-        imageFromWeb = Image.open(urllib.request.urlopen(imageUrl))
+
+        imageFromWeb = Image.open(
+            urllib.request.urlopen(urllib.request.Request(imageUrl, headers=headers))
+        )
         background = Image.new("RGBA", imageFromWeb.size, (255, 255, 255, 0))
         background.paste(imageFromWeb)
         # Resize Image From Web
