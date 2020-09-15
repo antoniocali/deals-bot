@@ -114,7 +114,7 @@ class MessageQueue:
             queryParams += f"min_discount={min_discount}"
         if max_price:
             queryParams += f"&max_price={max_price}"
-        req = requests.get(url)
+        req = requests.get(url + queryParams)
         if req.ok:
             response = req.json()
             data = response
