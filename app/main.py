@@ -33,8 +33,12 @@ def get_deals_camel(
 
 
 @app.get("/instant")
-def get_deals_instant() -> List[TypeDealsModel]:
-    return fetch_data(Website.INSTANT_GAMING, {})
+def get_deals_instant(
+    min_discount: Optional[int] = None, max_price: Optional[int] = None,
+) -> List[TypeDealsModel]:
+    return fetch_data(
+        Website.INSTANT_GAMING, {"min_discount": min_discount, "max_price": max_price,}
+    )
 
 
 def discountRangeQueryParam(discountRange: DiscountRange) -> str:

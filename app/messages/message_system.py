@@ -107,6 +107,13 @@ class MessageQueue:
 
     def _fetch_instant(self) -> List[TypeDealsModel]:
         url = "http://localhost:8000/instant"
+        min_discount = self.config.deals_min_discount
+        max_price = self.config.deals_max_price
+        queryParams = "?"
+        if min_discount:
+            queryParams += f"min_discount={min_discount}"
+        if max_price:
+            queryParams += f"&max_price={max_price}"
         req = requests.get(url)
         if req.ok:
             response = req.json()

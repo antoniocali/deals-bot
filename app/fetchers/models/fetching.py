@@ -207,6 +207,8 @@ class FetcherInstantGaming(Fetcher):
 
     def fetch_data(self, params: dict) -> List[TypeDealsModel]:
         url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
+        minDiscount: int = params.get("min_discount", None)
+        maxPrice: int = params.get("max_price", None)
         r = requests.get(url, headers=self.headers,)
         if not r.ok:
             return []
@@ -242,6 +244,16 @@ class FetcherInstantGaming(Fetcher):
                     )
                 )
             )
+            # Check if discount is lower than what we want
+            if minDiscount and discount < minDiscount:
+                # In case it skips the element
+                continue
+            
+            # Check if dealPrice is higher than maxPrice
+            if maxPrice and dealPrice > float(maxPrice):
+                # In case it skips the element
+                continue
+
             originalPrice = round(dealPrice + (dealPrice * discount) / 100, 2)
             data.append(
                 TypeDealsModel(
