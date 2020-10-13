@@ -3,7 +3,7 @@ from app.messages.model import Stats
 from app.utils import Utils
 from typing import Optional, List, Callable, Dict
 from app.logger import getLogger
-from app.models import DealsCategories, TypeDealsModel
+from app.models import DealsCategories, ShopsEnum, TypeDealsModel
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.events import (
@@ -48,6 +48,10 @@ class MessageQueue:
             self.config = Config.get_instance()
             self.stats = Stats()
             self._scheduler.start()
+            self.mappingShops: Dict[ShopsEnum, Callable[[], List[TypeDealsModel]]] = {
+                ShopsEnum.INSTANT_GAMING : self._fetch_instant,
+                ShopsEnum.AMAZON : self._fetch_camel
+            }
 
     def _listener(self, event):
         if event.code == EVENT_JOB_ERROR:
@@ -99,13 +103,15 @@ class MessageQueue:
             log.warning("Still refreshing data from previous run")
 
     def _get_deals_for_run(self) -> List[TypeDealsModel]:
-        deals = self._fetch_camel()
-        deals.extend(self._fetch_instant())
+        deals = []
+        for shop in self.config.shops:
+            deals.extend(self.mappingShops[shop]())
         deals = Utils.roundrobin(self.getQueueByCategories(deals))
         self.stats.queue = len(deals)
         return deals
 
     def _fetch_instant(self) -> List[TypeDealsModel]:
+        log.info("INSTANT_GAMING - Start Fetching")
         url = "http://localhost:8000/instant"
         min_discount = self.config.deals_min_discount
         max_price = self.config.deals_max_price
@@ -115,6 +121,7 @@ class MessageQueue:
         if max_price:
             queryParams += f"&max_price={max_price}"
         req = requests.get(url + queryParams)
+        log.info("INSTANT_GAMING - NO MORE DATA TO FETCH")
         if req.ok:
             response = req.json()
             data = response
@@ -149,7 +156,7 @@ class MessageQueue:
                 return response
             else:
                 return None
-
+        log.info("AMAZON - Start Fetching")
         # Params for fetching camel
         page = 1
         moreToFetch = True
