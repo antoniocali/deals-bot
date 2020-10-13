@@ -6,7 +6,7 @@ from telethon import TelegramClient
 from telethon.errors import BotInvalidError
 from telethon.tl.types import InputPeerUser, InputPeerChannel
 from telethon.tl.tlobject import TLObject
-from app.models import DealsCategories, ShortenProvider, mappingsCategories
+from app.models import DealsCategories, ShopsEnum, ShortenProvider, mappingsCategories, mappingsShop
 
 log = getLogger("CONFIG")
 
@@ -33,6 +33,7 @@ templated = set(
         "deals_filter_categories",
         "deals_categories",
         "image_template_uri",
+        "shops",
         "font_uri",
         "font_color",
         "font_color_border",
@@ -86,6 +87,15 @@ class Config:
                 self.amazon_affiliate = config["amazon_affiliate"]
                 # Instant Gaming
                 self.instant_gaming_affiliate = config["instant_gaming_affiliate"]
+
+                # Shops
+                shops = config["shops"]
+                self.shops: List[ShopsEnum] = list(
+                    map(
+                        lambda x: mappingsShop[x],
+                        map(lambda e: e[0], filter(lambda k: k[1], shops.items())),
+                    )
+                )
                 # Deals
                 deals = config["deals"]
                 self.deals_min_discount: Optional[int] = deals.get("min_discount", None)
@@ -171,9 +181,8 @@ class Config:
                 else:
                     self.font_color_border = None
 
-                bot = (
-                    TelegramClient("config", self.api_id, self.api_hash)
-                    .start(bot_token=self.bot_token)
+                bot = TelegramClient("config", self.api_id, self.api_hash).start(
+                    bot_token=self.bot_token
                 )
                 with bot:
                     telegram_type: Tuple[int, TLObject] = bot.loop.run_until_complete(

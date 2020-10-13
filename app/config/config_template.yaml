@@ -10,6 +10,10 @@ shorten_url:
   bitly_token: 
 # provider, choose between: [free, shortest, bitly]
   shorten_provider: 
+# choose which shops to use
+shops:
+  amazon: true
+  instant_gaming: false
 # amazon
 amazon_affiliate: 
 deals:

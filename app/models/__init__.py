@@ -59,6 +59,16 @@ class DealsCategories(Enum):
     INSTANT = "instant-gaming-computer-videogames"
 
 
+class ShopsEnum(IntEnum):
+    AMAZON = 0
+    INSTANT_GAMING = 1
+
+
+mappingsShop: Dict[str, ShopsEnum] = {
+    "amazon": ShopsEnum.AMAZON,
+    "instant_gaming": ShopsEnum.INSTANT_GAMING,
+}
+
 mappingsCategories: Dict[str, DealsCategories] = {
     "other": DealsCategories.OTHER,
     "auto": DealsCategories.AUTO,
