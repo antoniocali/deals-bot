@@ -18,7 +18,7 @@ setup(
         'requests==2.24.0',
         'selectorlib==0.16.0',
         'peewee==3.13.3',
-        'cfscrape==2.1.1'
+        'cfscrape==2.1.1',
+        'beautifulsoup4==4.9.3'
     ]
 )
-
