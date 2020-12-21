@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from app.models import DealsCategories, DealsModel, TypeDeal, TypeDealsModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from functools import reduce
 import requests
 import re
@@ -23,22 +23,64 @@ class FetcherAmazon(Fetcher):
     def __init__(self, headers: dict) -> None:
         self.headers = headers
 
-    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
+    def _get_sorted_deals(self, text: str) -> List[str]:
         r = requests.get(
-            f"https://www.amazon.it/gp/goldbox?gb_f_deals1={params['filter']}",
+            f"https://www.amazon.it/events/lastminutedeals",
             headers=self.headers,
         )
 
-        reg = r"\"dealDetails\"\s*:\s*{(.*?)}\s*\n\s*},"
-        matcher = re.search(reg, r.text, flags=re.DOTALL)
+        reg = r"\"sortedDealIDs\"\s*:\s*\[.*?\],"
+        matcher = re.findall(reg, text, flags=re.DOTALL | re.MULTILINE)
         if not matcher:
             return []
-        importantData = "{" + matcher.group(0)[:-2] + "} }"
-        extracted = json.loads(importantData)
-        mandatoryKeys = set(
+        biggest_list = []
+        for elem in matcher:
+            important_data = "{" + elem[:-1] + "}"
+            extracted = json.loads(important_data)
+            _cur = extracted["sortedDealIDs"]
+            if len(_cur) > len(biggest_list):
+                biggest_list = _cur
+        return biggest_list
+
+    def _get_market_id(self, text: str) -> Optional[str]:
+        reg = r"\'ObfuscatedMarketplaceId\'\s*:\s*\'([a-zA-Z0-9]*?)\',"
+        matcher = re.search(reg, text, flags=re.DOTALL | re.MULTILINE)
+        if not matcher:
+            return ""
+        else:
+            return matcher.group(1)
+
+    def _post_api(self, market_id: str, deals: List[str]) -> Dict:
+        _json = {"requestMetadata": {"marketplaceID": market_id, "clientID": "goldbox_mobile_pc"},
+                 "dealTargets": [{'dealID': deal} for deal in deals[:15]]}
+
+        r = requests.post('https://www.amazon.it/xa/dealcontent/v2/GetDeals', headers=self.headers, json=_json)
+        return r.json()
+
+    def _get_deals(self, params: Dict) -> Dict:
+        r = requests.get(
+            f"https://www.amazon.it/events/lastminutedeals",
+            headers=self.headers,
+        )
+        if not r.ok:
+            return {}
+        html = r.text
+        market_id = self._get_market_id(html)
+        deals = self._get_sorted_deals(html)
+        if not market_id or not deals:
+            return {}
+        computed_deals = self._post_api(market_id, deals)
+        return computed_deals
+
+    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
+        extracted = self._get_deals(params)
+        print(extracted["dealDetails"].values())
+        if not extracted:
+            return []
+        mandatory_keys = set(
             [
                 "description",
-                "id",
+                "impressionAsin",
                 "primaryImage",
                 "maxBAmount",
                 "maxDealPrice",
@@ -52,7 +94,7 @@ class FetcherAmazon(Fetcher):
                     dealType=TypeDeal.AMAZON,
                     deal=DealsModel(
                         description=item["description"],
-                        id=item["id"],
+                        id=item["impressionAsin"],
                         imageUrl=item["primaryImage"],
                         originalPrice=item["maxBAmount"],
                         dealPrice=item["maxDealPrice"],
@@ -61,10 +103,12 @@ class FetcherAmazon(Fetcher):
                         slug=slugify(item["description"]),
                     ),
                 ),
-                filter(
-                    lambda item: set(item.keys()).issuperset(mandatoryKeys),
-                    extracted["dealDetails"].values(),
-                ),
+                filter(lambda item: all([item.get(elem) for elem in mandatory_keys]),
+                       filter(
+                           lambda item: set(item.keys()).issuperset(mandatory_keys),
+                           extracted["dealDetails"].values(),
+                       ),
+                       )
             )
         )
 
@@ -81,7 +125,7 @@ class FetcherCamel(Fetcher):
         categories: List[DealsCategories] = params.get("categories", None)
 
         def flat_list(
-            x: List[TypeDealsModel], y: List[TypeDealsModel]
+                x: List[TypeDealsModel], y: List[TypeDealsModel]
         ) -> List[TypeDealsModel]:
             x.extend(y)
             return x
@@ -105,26 +149,26 @@ class FetcherCamel(Fetcher):
             )
 
     def _get_data(
-        self,
-        pageQuery: int,
-        maxPrice: Optional[int] = None,
-        minDiscount: Optional[int] = None,
-        category: Optional[str] = None,
+            self,
+            pageQuery: int,
+            maxPrice: Optional[int] = None,
+            minDiscount: Optional[int] = None,
+            category: Optional[str] = None,
     ) -> List[TypeDealsModel]:
         url = "https://it.camelcamelcamel.com/top_drops"
         url += f"?p={pageQuery}"
         if category:
             url += f"&bn={category}"
-        r = self.scraper.get(url, headers=self.headers,)
+        r = self.scraper.get(url, headers=self.headers, )
         selector = selectorlib.Extractor.from_yaml_file(
             "./app/fetchers/selectors/camel_selector.yaml"
         )
         extracted = selector.extract(r.text)
         if (
-            not extracted["imageUrl"]
-            or not extracted["discountPrice"]
-            or not extracted["discountAmount"]
-            or not extracted["link"]
+                not extracted["imageUrl"]
+                or not extracted["discountPrice"]
+                or not extracted["discountAmount"]
+                or not extracted["link"]
         ):
             return list()
         important_data = zip(
@@ -209,7 +253,7 @@ class FetcherInstantGaming(Fetcher):
         url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
         minDiscount: int = params.get("min_discount", None)
         maxPrice: int = params.get("max_price", None)
-        r = requests.get(url, headers=self.headers,)
+        r = requests.get(url, headers=self.headers, )
         if not r.ok:
             return []
 
@@ -248,7 +292,7 @@ class FetcherInstantGaming(Fetcher):
             if minDiscount and discount < minDiscount:
                 # In case it skips the element
                 continue
-            
+
             # Check if dealPrice is higher than maxPrice
             if maxPrice and dealPrice > float(maxPrice):
                 # In case it skips the element

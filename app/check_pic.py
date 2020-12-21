@@ -6,5 +6,6 @@ image_util.create_image(
     "https://images-na.ssl-images-amazon.com/images/I/81XJbWb1RUL._AC_UY625_.jpg",
     "test",
     to_test=True,
+    currency="€"
 )
 

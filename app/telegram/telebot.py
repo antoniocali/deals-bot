@@ -120,6 +120,7 @@ async def send_message(
         dealPrice=_deal.dealPrice,
         imageUrl=_deal.imageUrl,
         save_as=_deal.id,
+        currency="€"
     )
     if save_on_db:
         database.upsertDeal(deal)
