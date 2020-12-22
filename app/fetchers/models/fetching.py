@@ -15,7 +15,7 @@ from time import sleep
 
 class Fetcher(ABC):
     @abstractmethod
-    def fetch_data(self, params: dict = None):
+    def fetch_data(self, params: Optional[Dict] = None):
         pass
 
 
@@ -67,7 +67,7 @@ class FetcherAmazon(Fetcher):
             headers=self.headers,
         )
         if not r.ok:
-            return {}
+            return []
         html = r.text
         market_id = self._get_market_id(html)
         deals = self._get_sorted_deals(html)
@@ -76,7 +76,7 @@ class FetcherAmazon(Fetcher):
         computed_deals = self._post_api(market_id, deals)
         return computed_deals
 
-    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
+    def fetch_data(self, params: Optional[Dict] = None) -> List[TypeDealsModel]:
         extracted = self._get_deals(params)
         if not extracted:
             return []
@@ -112,7 +112,7 @@ class FetcherCamel(Fetcher):
         self.headers = headers
         self.scraper = cfscrape.create_scraper()
 
-    def fetch_data(self, params: dict = None) -> List[TypeDealsModel]:
+    def fetch_data(self, params: Optional[Dict] = None) -> List[TypeDealsModel]:
         pageQuery: int = params["page"]
         minDiscount: int = params.get("min_discount", None)
         maxPrice: int = params.get("max_price", None)
@@ -243,10 +243,10 @@ class FetcherInstantGaming(Fetcher):
     def __init__(self, headers: dict):
         self.headers = headers
 
-    def fetch_data(self, params: dict) -> List[TypeDealsModel]:
+    def fetch_data(self, params: Optional[Dict] = None) -> List[TypeDealsModel]:
         url = "https://www.instant-gaming.com/it/ricerca/?instock=1&currency=EUR"
-        minDiscount: int = params.get("min_discount", None)
-        maxPrice: int = params.get("max_price", None)
+        min_discount: int = params.get("min_discount", None)
+        max_price: int = params.get("max_price", None)
         r = requests.get(url, headers=self.headers, )
         if not r.ok:
             return []
@@ -255,19 +255,19 @@ class FetcherInstantGaming(Fetcher):
             "./app/fetchers/selectors/instant_gaming_selector.yaml"
         )
         extracted = selector.extract(r.text)
-        importantData = zip(extracted["description"], extracted["html"])
+        important_data = zip(extracted["description"], extracted["html"])
         data: List[TypeDealsModel] = list()
         regex = r"it\/([0-9]+)-"
-        for elem in importantData:
+        for elem in important_data:
             description = elem[0]
             html = elem[1]
             soup = BeautifulSoup(html, "html.parser")
             link = soup.a["href"]
-            imageUrl = soup.img["src"]
+            image_url = soup.img["src"]
             matcher = re.search(regex, link)
             if not matcher:
                 continue
-            dealPrice = round(
+            deal_price = round(
                 float(
                     Utils.removeSpecialFromPrice(
                         soup.find("div", {"class": "price"}).string.strip()
@@ -283,25 +283,25 @@ class FetcherInstantGaming(Fetcher):
                 )
             )
             # Check if discount is lower than what we want
-            if minDiscount and discount < minDiscount:
+            if min_discount and discount < min_discount:
                 # In case it skips the element
                 continue
 
             # Check if dealPrice is higher than maxPrice
-            if maxPrice and dealPrice > float(maxPrice):
+            if max_price and deal_price > float(max_price):
                 # In case it skips the element
                 continue
 
-            originalPrice = round(dealPrice + (dealPrice * discount) / 100, 2)
+            original_price = round(deal_price + (deal_price * discount) / 100, 2)
             data.append(
                 TypeDealsModel(
                     dealType=TypeDeal.INSTANT_GAMING,
                     deal=DealsModel(
-                        dealPrice=dealPrice,
-                        originalPrice=originalPrice,
+                        dealPrice=deal_price,
+                        originalPrice=original_price,
                         percentOff=discount,
                         description=description,
-                        imageUrl=imageUrl,
+                        imageUrl=image_url,
                         id=matcher.group(1),
                         slug=slugify(description),
                         category=DealsCategories.INSTANT.value
