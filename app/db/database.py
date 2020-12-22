@@ -99,7 +99,7 @@ class Database:
     def upsertTelegramMessage(
         self, telegramMsg: TelegramMessageModel, deal: TypeDealsModel
     ) -> Optional[TelegramMessage]:
-        retTelegram = self.getTelegramMessage(telegramMsg=telegramMsg, deal=deal)
+        retTelegram = self.searchTelegramMessage(channel_id=telegramMsg.channel_id, deal=deal)
         if not retTelegram:
             return self._createTelegramMessage(telegramMsg=telegramMsg, deal=deal)
         else:
