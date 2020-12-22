@@ -50,14 +50,18 @@ class FetcherAmazon(Fetcher):
         else:
             return matcher.group(1)
 
-    def _post_api(self, market_id: str, deals: List[str]) -> Dict:
-        _json = {"requestMetadata": {"marketplaceID": market_id, "clientID": "goldbox_mobile_pc"},
-                 "dealTargets": [{'dealID': deal} for deal in deals[:15]]}
+    def _post_api(self, market_id: str, deals: List[str]) -> List:
+        _fullDict = []
+        for _deals in [deals[i:i + 15] for i in range(0, len(deals), 100)]:
+            _json = {"requestMetadata": {"marketplaceID": market_id, "clientID": "goldbox_mobile_pc"},
+                     "dealTargets": [{'dealID': deal} for deal in _deals]}
+            r = requests.post('https://www.amazon.it/xa/dealcontent/v2/GetDeals', headers=self.headers, json=_json)
+            response = r.json()
+            _fullDict += response["dealDetails"].values()
 
-        r = requests.post('https://www.amazon.it/xa/dealcontent/v2/GetDeals', headers=self.headers, json=_json)
-        return r.json()
+        return _fullDict
 
-    def _get_deals(self, params: Dict) -> Dict:
+    def _get_deals(self, params: Dict) -> List:
         r = requests.get(
             f"https://www.amazon.it/events/lastminutedeals",
             headers=self.headers,
@@ -68,26 +72,16 @@ class FetcherAmazon(Fetcher):
         market_id = self._get_market_id(html)
         deals = self._get_sorted_deals(html)
         if not market_id or not deals:
-            return {}
+            return []
         computed_deals = self._post_api(market_id, deals)
         return computed_deals
 
     def fetch_data(self, params: dict) -> List[TypeDealsModel]:
         extracted = self._get_deals(params)
-        print(extracted["dealDetails"].values())
         if not extracted:
             return []
-        mandatory_keys = set(
-            [
-                "description",
-                "impressionAsin",
-                "primaryImage",
-                "maxBAmount",
-                "maxDealPrice",
-                "maxPercentOff",
-                "reviewRating",
-            ]
-        )
+        mandatory_keys = {"description", "impressionAsin", "primaryImage", "maxBAmount", "maxDealPrice",
+                          "maxPercentOff", "reviewRating"}
         return list(
             map(
                 lambda item: TypeDealsModel(
@@ -106,7 +100,7 @@ class FetcherAmazon(Fetcher):
                 filter(lambda item: all([item.get(elem) for elem in mandatory_keys]),
                        filter(
                            lambda item: set(item.keys()).issuperset(mandatory_keys),
-                           extracted["dealDetails"].values(),
+                           extracted,
                        ),
                        )
             )
