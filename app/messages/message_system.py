@@ -50,7 +50,8 @@ class MessageQueue:
             self._scheduler.start()
             self.mappingShops: Dict[ShopsEnum, Callable[[], List[TypeDealsModel]]] = {
                 ShopsEnum.INSTANT_GAMING : self._fetch_instant,
-                ShopsEnum.AMAZON : self._fetch_camel
+                ShopsEnum.AMAZON: self._fetch_camel,
+                ShopsEnum.AMAZON_REAL: self._fetch_amazon
             }
 
     def _listener(self, event):
@@ -108,6 +109,19 @@ class MessageQueue:
             deals.extend(self.mappingShops[shop]())
         deals = Utils.roundrobin(self.getQueueByCategories(deals))
         self.stats.queue = len(deals)
+        return deals
+
+    def _fetch_amazon(self) -> List[TypeDealsModel]:
+        log.info("AMAZON - Start Fetching")
+        url = "http://localhost:8000/amazon"
+        req = requests.get(url)
+        log.info("AMAZON - NO MORE DATA TO FETCH")
+        if req.ok:
+            response = req.json()
+            data = response
+        else:
+            return []
+        deals = self.etl_deals(data)
         return deals
 
     def _fetch_instant(self) -> List[TypeDealsModel]:

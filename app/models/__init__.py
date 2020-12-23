@@ -62,11 +62,13 @@ class DealsCategories(Enum):
 class ShopsEnum(IntEnum):
     AMAZON = 0
     INSTANT_GAMING = 1
+    AMAZON_REAL = 2
 
 
 mappingsShop: Dict[str, ShopsEnum] = {
     "amazon": ShopsEnum.AMAZON,
     "instant_gaming": ShopsEnum.INSTANT_GAMING,
+    "amazon_real": ShopsEnum.AMAZON_REAL
 }
 
 mappingsCategories: Dict[str, DealsCategories] = {
