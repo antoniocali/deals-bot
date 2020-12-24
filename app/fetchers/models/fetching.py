@@ -24,11 +24,6 @@ class FetcherAmazon(Fetcher):
         self.headers = headers
 
     def _get_sorted_deals(self, text: str) -> List[str]:
-        r = requests.get(
-            f"https://www.amazon.it/events/lastminutedeals",
-            headers=self.headers,
-        )
-
         reg = r"\"sortedDealIDs\"\s*:\s*\[.*?\],"
         matcher = re.findall(reg, text, flags=re.DOTALL | re.MULTILINE)
         if not matcher:
@@ -63,7 +58,7 @@ class FetcherAmazon(Fetcher):
 
     def _get_deals(self, params: Dict) -> List:
         r = requests.get(
-            f"https://www.amazon.it/events/lastminutedeals",
+            f"https://www.amazon.it/gp/goldbox",
             headers=self.headers,
         )
         if not r.ok:
